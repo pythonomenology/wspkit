@@ -1,19 +1,38 @@
 /* Custom brand colors drawn from the pythonomenology logo: a deep navy nav
    bar with a blue accent in light mode and a yellow accent in dark mode.
-   Active because the palette sets primary = "custom" and accent = "custom". */
+   The selectors must match the data-md-color-* attributes the theme sets for
+   primary = "custom" / accent = "custom". */
 
-:root {
+[data-md-color-primary="custom"] {
   --md-primary-fg-color: #141b3d;
   --md-primary-fg-color--light: #2a3566;
   --md-primary-fg-color--dark: #0d1230;
   --md-primary-bg-color: #ffffff;
   --md-primary-bg-color--light: #ffffffb3;
+}
+
+[data-md-color-accent="custom"] {
   --md-accent-fg-color: #5b8ec9;
 }
 
-[data-md-color-scheme="slate"] {
-  --md-primary-fg-color: #141b3d;
-  --md-primary-fg-color--light: #2a3566;
-  --md-primary-fg-color--dark: #0d1230;
+/* Yellow accent reads better on the navy chrome in dark mode. */
+[data-md-color-scheme="slate"][data-md-color-accent="custom"] {
   --md-accent-fg-color: #f4c025;
+}
+
+/* Dark mode: tint the page body a navy distinct from the header bar. */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #0c1228;
+  --md-default-bg-color--light: #141b3d;
+  --md-default-bg-color--lighter: #1c2550;
+  --md-default-bg-color--lightest: #26316b;
+}
+
+/* The "modern" variant gives the header/tabs a neutral translucent background
+   rather than the primary color, so color them explicitly with the brand navy
+   and switch their text/icons to the light foreground. */
+.md-header,
+.md-tabs {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
 }
