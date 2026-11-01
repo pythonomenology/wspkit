@@ -47,3 +47,21 @@ name = "pythonomenology/wspkit"
 
 [project.theme]
 variant = "modern"
+logo = "images/logo.png"
+favicon = "images/logo.png"
+
+# Light/dark palette with a header toggle. Each entry is one scheme; the
+# toggle button switches between them (default = light, slate = dark).
+[[project.theme.palette]]
+scheme = "default"
+primary = "indigo"
+accent = "cyan"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "indigo"
+accent = "cyan"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
