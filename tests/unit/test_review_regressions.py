@@ -22,13 +22,13 @@ from typing import Any
 
 import pytest
 
-from wispy.cli import fallback as fb
-from wispy.cli import main as cli_main
-from wispy.cli._exit_codes import ExitCode
-from wispy.cli.client import WspClient
-from wispy.cli.state import FallbackState, _retry_until_locked
-from wispy.config import _spawn_and_capture, configured_timeout
-from wispy.endpoints import (
+from wspkit.cli import fallback as fb
+from wspkit.cli import main as cli_main
+from wspkit.cli._exit_codes import ExitCode
+from wspkit.cli.client import WspClient
+from wspkit.cli.state import FallbackState, _retry_until_locked
+from wspkit.config import _spawn_and_capture, configured_timeout
+from wspkit.endpoints import (
     Capabilities,
     CreateEnvironmentParams,
     DeleteEnvironmentParams,
@@ -36,12 +36,12 @@ from wispy.endpoints import (
     ExecuteParams,
     GetEnvironmentParams,
 )
-from wispy.errors import JsonRpcErrorCode, WspError, WspErrorCode
-from wispy.framing import encode_frame
-from wispy.protocol import ParseFailure, ParseFailureKind, parse_message
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
-from wispy.transport import _MAX_QUEUED_CHUNKS, StdioTransport
+from wspkit.errors import JsonRpcErrorCode, WspError, WspErrorCode
+from wspkit.framing import encode_frame
+from wspkit.protocol import ParseFailure, ParseFailureKind, parse_message
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
+from wspkit.transport import _MAX_QUEUED_CHUNKS, StdioTransport
 
 _POSIX_ONLY = pytest.mark.skipif(os.name == "nt", reason="POSIX flock and sh scripts")
 
@@ -120,7 +120,7 @@ def test_server_survives_an_unexpected_parse_failure(tmp_path: Path, monkeypatch
             raise RuntimeError(msg)
         return real_parse(raw)
 
-    monkeypatch.setattr("wispy.server.parse_message", parse_raising_once)
+    monkeypatch.setattr("wspkit.server.parse_message", parse_raising_once)
     stdin = _init_frame() + _frame({"jsonrpc": "2.0", "id": 2, "method": "ping"})
     stdin += _frame({"jsonrpc": "2.0", "id": 3, "method": "ping"})
     _, responses, stderr = _run_server(tmp_path, stdin, _ping_registry())
@@ -149,7 +149,7 @@ def test_lock_retry_propagates_other_errors() -> None:
     def try_lock() -> None:
         raise OSError(errno.EBADF, "bad file descriptor")
 
-    with pytest.raises(OSError) as excinfo:
+    with pytest.raises(OSError) as excinfo:  # noqa: PT011 - asserting on errno below, broad OSError is intended
         _retry_until_locked(try_lock, poll=0)
     assert excinfo.value.errno == errno.EBADF
 
@@ -172,13 +172,13 @@ def test_configured_timeout_reads_only_the_named_entry(tmp_path: Path) -> None:
         'command = ["true"]\n'
         "timeout = 120\n"
         '[handlers."environment/list"]\n'
-        'import = "no_such_module_wispy_test:handler"\n'
+        'import = "no_such_module_wspkit_test:handler"\n'
     )
     assert configured_timeout(config, "environment/create") == 120.0
     # No timeout, an ``import`` entry the CLI must not import, or no entry.
     assert configured_timeout(config, "environment/list") is None
     assert configured_timeout(config, "environment/get") is None
-    assert "no_such_module_wispy_test" not in sys.modules
+    assert "no_such_module_wspkit_test" not in sys.modules
 
 
 @pytest.mark.parametrize("content", ["not toml [", '[handlers."environment/create"]\ntimeout = -1\n'])
@@ -193,20 +193,20 @@ def test_config_mode_waits_for_the_entry_timeout(tmp_path: Path, monkeypatch: py
     config.write_text('[handlers."environment/list"]\ncommand = ["true"]\nresult = "none"\ntimeout = 120\n')
     seen: dict[str, Any] = {}
 
-    async def fake_run_with_client(argv: list[str], method: str, params: dict[str, Any], **kwargs: Any) -> int:
+    async def fake_run_with_client(argv: list[str], method: str, params: dict[str, Any], **kwargs: Any) -> int:  # noqa: ARG001 - signature mirrors the real client callback
         seen.update(kwargs)
         return ExitCode.SUCCESS
 
-    monkeypatch.setattr("wispy.cli.main._run_with_client", fake_run_with_client)
+    monkeypatch.setattr("wspkit.cli.main._run_with_client", fake_run_with_client)
     assert cli_main.main(["--config", str(config), "environment/list"]) == ExitCode.SUCCESS
     assert seen["response_timeout"] == 125.0
 
 
 _SLOW_LIST_SERVER = """
 import asyncio, sys, time
-from wispy.endpoints import Capabilities
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
+from wspkit.endpoints import Capabilities
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
 
 registry = HandlerRegistry()
 registry.register("initialize", lambda _p: Capabilities())
@@ -244,7 +244,7 @@ def test_client_response_timeout_applies_to_the_method(
 
 def test_client_accepts_responses_of_any_size() -> None:
     client = WspClient(["unused"])
-    assert client._decoder._max_content_length is None
+    assert client._decoder._max_content_length is None  # noqa: SLF001 - asserting on private decoder state
 
 
 # --------------------------------------------------------------------- #
@@ -281,12 +281,12 @@ def _fake_venv(_interpreter: Any, target: Any) -> None:
 
 @pytest.fixture
 def fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[HandlerRegistry, str, FallbackState]:
-    monkeypatch.delenv("WISPY_FALLBACK_ENVS_IN_USE", raising=False)
-    monkeypatch.setattr("wispy.cli.fallback.shutil.which", lambda name: f"/usr/bin/{name}")
-    monkeypatch.setattr("wispy.cli.fallback._create_venv", _fake_venv)
+    monkeypatch.delenv("WSPKIT_FALLBACK_ENVS_IN_USE", raising=False)
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr("wspkit.cli.fallback._create_venv", _fake_venv)
     registry = fb.make_fallback_registry(tmp_path / "state")
-    created = registry.lookup("environment/create")(CreateEnvironmentParams(name="demo", python_version="3.12"))
-    return registry, created["id"], FallbackState(tmp_path / "state")
+    created = registry.lookup("environment/create")(CreateEnvironmentParams(name="demo", python_version="3.12"))  # type: ignore[not-callable]
+    return registry, created["id"], FallbackState(tmp_path / "state")  # type: ignore[bad-index]
 
 
 def _call(registry: HandlerRegistry, method: str, params: Any) -> Any:
@@ -306,7 +306,7 @@ def test_failed_sweep_is_reported_on_stderr(
         msg = "directory busy"
         raise OSError(msg)
 
-    monkeypatch.setattr("wispy.cli.fallback.shutil.rmtree", failing_rmtree)
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.rmtree", failing_rmtree)
     assert _call(registry, "environment/delete", DeleteEnvironmentParams(id=env_id)) == {"id": env_id}
     err = capsys.readouterr().err
     assert "could not remove leftover environment directory" in err
@@ -333,10 +333,10 @@ def test_execute_marks_its_env_in_use_for_the_command(
         seen_env.update(kwargs["env"])
         return subprocess.CompletedProcess(argv, 0, b"", b"")
 
-    monkeypatch.setenv("WISPY_FALLBACK_ENVS_IN_USE", "env-outer000000")
-    monkeypatch.setattr("wispy.cli.fallback.subprocess.run", fake_run)
+    monkeypatch.setenv("WSPKIT_FALLBACK_ENVS_IN_USE", "env-outer000000")
+    monkeypatch.setattr("wspkit.cli.fallback.subprocess.run", fake_run)
     _call(registry, "environment/execute", ExecuteParams(id=env_id, argv=("tool",)))
-    assert seen_env["WISPY_FALLBACK_ENVS_IN_USE"].split(os.pathsep) == ["env-outer000000", env_id]
+    assert seen_env["WSPKIT_FALLBACK_ENVS_IN_USE"].split(os.pathsep) == ["env-outer000000", env_id]
 
 
 @_POSIX_ONLY
@@ -345,7 +345,7 @@ def test_nested_delete_of_the_running_env_fails_instead_of_deadlocking(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     registry, env_id, state = fallback
-    monkeypatch.setenv("WISPY_FALLBACK_ENVS_IN_USE", env_id)
+    monkeypatch.setenv("WSPKIT_FALLBACK_ENVS_IN_USE", env_id)
     # The ancestor execute holds the env lock while its command runs.
     with state.env_lock(env_id, shared=True):
         started = time.monotonic()
@@ -363,7 +363,7 @@ def test_nested_get_does_not_wait_on_its_ancestors_lock(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     registry, env_id, state = fallback
-    monkeypatch.setenv("WISPY_FALLBACK_ENVS_IN_USE", env_id)
+    monkeypatch.setenv("WSPKIT_FALLBACK_ENVS_IN_USE", env_id)
     results: list[Any] = []
     # Exclusive, as a Windows ancestor's "shared" lock is.
     with state.env_lock(env_id, shared=False):
@@ -437,12 +437,12 @@ def test_reader_thread_reads_a_bounded_distance_ahead(tmp_path: Path) -> None:
     stdin_path.write_bytes(b"x" * (64 * 1024 * 64))
 
     async def run() -> int:
-        with open(stdin_path, "rb") as stdin:
+        with open(stdin_path, "rb") as stdin:  # noqa: ASYNC230 - test harness reads a fixture file synchronously
             transport = StdioTransport(stdin=stdin, stdout=io.BytesIO(), stderr=io.StringIO())
-            await transport._read_chunk()
+            await transport._read_chunk()  # noqa: SLF001 - exercising the private chunk reader
             await asyncio.sleep(0.3)
-            assert transport._chunks is not None
-            return transport._chunks.qsize()
+            assert transport._chunks is not None  # noqa: SLF001 - asserting on private queue state
+            return transport._chunks.qsize()  # noqa: SLF001 - reading private queue size
 
     assert asyncio.run(run()) <= _MAX_QUEUED_CHUNKS
 
@@ -455,6 +455,6 @@ def test_reader_thread_reads_a_bounded_distance_ahead(tmp_path: Path) -> None:
 def test_inprocess_cli_prints_wire_models(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     registry = HandlerRegistry()
     registry.register("environment/list", lambda _p: [Environment(id="env-1", name="a", python_version="3.12")])
-    monkeypatch.setattr("wispy.cli.main.make_fallback_registry", lambda: registry)
+    monkeypatch.setattr("wspkit.cli.main.make_fallback_registry", lambda: registry)
     assert cli_main.main(["environment/list"]) == ExitCode.SUCCESS
     assert json.loads(capsys.readouterr().out) == [{"id": "env-1", "name": "a", "python_version": "3.12"}]

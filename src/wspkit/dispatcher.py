@@ -90,12 +90,7 @@ class ExitDispatch:
 # --------------------------------------------------------------------- #
 
 
-_DispatchResult = (
-    JsonRpcResponse
-    | list[JsonRpcResponse]
-    | ExitDispatch
-    | None
-)
+_DispatchResult = JsonRpcResponse | list[JsonRpcResponse] | ExitDispatch | None
 
 
 async def dispatch(

@@ -14,14 +14,14 @@ import sys
 import textwrap
 import time
 import warnings
-from pathlib import Path
+from pathlib import Path  # noqa: TC003 - Path used at runtime, not only in annotations
 from typing import Any
 
 import pytest
 
-from wispy.cli.fallback import make_fallback_registry
-from wispy.cli.main import build_parser, main
-from wispy.config import (
+from wspkit.cli.fallback import make_fallback_registry
+from wspkit.cli.main import build_parser, main
+from wspkit.config import (
     ConfigEntry,
     ResultMode,
     SubprocessHandlerSpec,
@@ -29,20 +29,20 @@ from wispy.config import (
     load_config,
     make_handler,
 )
-from wispy.dispatcher import _invoke_handler, dispatch
-from wispy.endpoints import (
+from wspkit.dispatcher import _invoke_handler, dispatch
+from wspkit.endpoints import (
     Capabilities,
     CreateEnvironmentParams,
     Environment,
     ExecuteParams,
     GetEnvironmentParams,
 )
-from wispy.errors import JsonRpcErrorCode, WspError, WspErrorCode
-from wispy.framing import DecodeError, FrameDecoder, encode_frame
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import JsonRpcResponse, parse_message, serialize_response
-from wispy.registry import HandlerRegistry
-from wispy.server import _emit
+from wspkit.errors import JsonRpcErrorCode, WspError, WspErrorCode
+from wspkit.framing import DecodeError, FrameDecoder, encode_frame
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import JsonRpcResponse, parse_message, serialize_response
+from wspkit.registry import HandlerRegistry
+from wspkit.server import _emit
 
 # Prints its argv (minus the script name) as a JSON array.
 _ECHO_ARGV = [sys.executable, "-c", "import json, sys; print(json.dumps(sys.argv[1:]))"]
@@ -103,8 +103,8 @@ def test_bug1_unset_optional_param_reports_missing() -> None:
         ConfigEntry("environment/execute", SubprocessHandlerSpec((*_ECHO_ARGV, "{cwd}"), ResultMode.EXEC)),
     )
     with pytest.raises(WspError) as excinfo:
-        asyncio.run(handler(ExecuteParams(id="e", argv=("x",))))
-    assert excinfo.value.data["reason"] == "missing-template-key"
+        asyncio.run(handler(ExecuteParams(id="e", argv=("x",))))  # type: ignore[bad-argument-type]
+    assert excinfo.value.data["reason"] == "missing-template-key"  # type: ignore[unsupported-operation]
 
 
 def test_bug1_template_result_renders_from_dataclass_params() -> None:
@@ -114,7 +114,7 @@ def test_bug1_template_result_renders_from_dataclass_params() -> None:
         result_template={"id": "{name}", "python_version": "{python_version}"},
     )
     handler = make_handler(ConfigEntry("environment/create", spec))
-    result = asyncio.run(handler(CreateEnvironmentParams(name="scratch", python_version="3.12")))
+    result = asyncio.run(handler(CreateEnvironmentParams(name="scratch", python_version="3.12")))  # type: ignore[bad-argument-type]
     assert result == {"id": "scratch", "python_version": "3.12"}
 
 
@@ -194,12 +194,16 @@ def test_bug5_tool_argv_is_split_at_the_method(monkeypatch: pytest.MonkeyPatch) 
         captured.update(argv=argv, method=method, params=params)
         return 0
 
-    monkeypatch.setattr("wispy.cli.main._run_with_client", _fake_run_with_client)
+    monkeypatch.setattr("wspkit.cli.main._run_with_client", _fake_run_with_client)
 
     code = main(["--tool", "mytool", "serve", "--verbose", "environment/get", "--id", "env-1"])
 
     assert code == 0
-    assert captured == {"argv": ["mytool", "serve", "--verbose"], "method": "environment/get", "params": {"id": "env-1"}}
+    assert captured == {
+        "argv": ["mytool", "serve", "--verbose"],
+        "method": "environment/get",
+        "params": {"id": "env-1"},
+    }
 
 
 def test_bug5_tool_without_server_argv_is_a_usage_error() -> None:
@@ -220,7 +224,7 @@ def test_bug7_argv_and_env_flags_produce_list_and_dict(monkeypatch: pytest.Monke
         captured.update(method=method, params=params)
         return 0
 
-    monkeypatch.setattr("wispy.cli.main._run_fallback_inprocess", _fake_fallback)
+    monkeypatch.setattr("wspkit.cli.main._run_fallback_inprocess", _fake_fallback)
 
     main(["environment/execute", "--id", "e", "--env", "A=1", "--env", "B=x=y", "--argv", "python", "-c", "pass"])
 
@@ -242,27 +246,27 @@ def test_bug9_fallback_create_builds_venv_on_requested_interpreter(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("wispy.cli.fallback.shutil.which", lambda name: f"/opt/py/bin/{name}")
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.which", lambda name: f"/opt/py/bin/{name}")
     calls: list[list[str]] = []
 
     def _fake_run(argv: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[bytes]:
         calls.append(argv)
         return subprocess.CompletedProcess(argv, 0, b"", b"")
 
-    monkeypatch.setattr("wispy.cli.fallback.subprocess.run", _fake_run)
+    monkeypatch.setattr("wspkit.cli.fallback.subprocess.run", _fake_run)
     registry = make_fallback_registry(tmp_path)
 
     handler = registry.lookup("environment/create")
     assert handler is not None
     created = handler(CreateEnvironmentParams(name="old", python_version="3.9"))
 
-    assert calls == [["/opt/py/bin/python3.9", "-m", "venv", str(tmp_path / "envs" / created["id"])]]
+    assert calls == [["/opt/py/bin/python3.9", "-m", "venv", str(tmp_path / "envs" / created["id"])]]  # type: ignore[bad-index]
 
 
 def test_bug9_failed_venv_command_is_execution_failed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("wispy.cli.fallback.shutil.which", lambda name: f"/opt/py/bin/{name}")
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.which", lambda name: f"/opt/py/bin/{name}")
     monkeypatch.setattr(
-        "wispy.cli.fallback.subprocess.run",
+        "wspkit.cli.fallback.subprocess.run",
         lambda argv, **_kw: subprocess.CompletedProcess(argv, 1, b"", b"no ensurepip"),
     )
     handler = make_fallback_registry(tmp_path).lookup("environment/create")
@@ -328,14 +332,14 @@ def test_bug11_timeout_is_configurable(tmp_path: Path) -> None:
 
     started = time.monotonic()
     with pytest.raises(WspError) as excinfo:
-        asyncio.run(make_handler(entry)(None))
+        asyncio.run(make_handler(entry)(None))  # type: ignore[bad-argument-type]
     assert time.monotonic() - started < 10
-    assert excinfo.value.data["reason"] == "timeout"
+    assert excinfo.value.data["reason"] == "timeout"  # type: ignore[unsupported-operation]
 
 
 @pytest.mark.parametrize("bad", ["0", "-1", "true", '"30"'])
 def test_bug11_invalid_timeout_is_a_config_error(tmp_path: Path, bad: str) -> None:
-    from wispy.config import ConfigError
+    from wspkit.config import ConfigError  # noqa: PLC0415 - intentional local import in test
 
     config = tmp_path / "c.toml"
     config.write_text(f'[handlers."environment/list"]\ncommand = ["echo"]\ntimeout = {bad}\n')
@@ -392,20 +396,20 @@ def test_bug13_header_garbage_is_bounded() -> None:
 
 
 def test_bug14_execute_timeout_is_reported_as_timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("wispy.cli.fallback.shutil.which", lambda name: f"/opt/py/bin/{name}")
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.which", lambda name: f"/opt/py/bin/{name}")
     registry = make_fallback_registry(tmp_path)
     monkeypatch.setattr(
-        "wispy.cli.fallback.subprocess.run",
+        "wspkit.cli.fallback.subprocess.run",
         lambda argv, **_kw: subprocess.CompletedProcess(argv, 0, b"", b""),
     )
     create = registry.lookup("environment/create")
     assert create is not None
-    env_id = create(CreateEnvironmentParams(name="x", python_version="3.9"))["id"]
+    env_id = create(CreateEnvironmentParams(name="x", python_version="3.9"))["id"]  # type: ignore[bad-index]
 
     def _timeout(argv: list[str], **kw: Any) -> Any:
         raise subprocess.TimeoutExpired(argv, kw.get("timeout", 0))
 
-    monkeypatch.setattr("wispy.cli.fallback.subprocess.run", _timeout)
+    monkeypatch.setattr("wspkit.cli.fallback.subprocess.run", _timeout)
     execute = registry.lookup("environment/execute")
     assert execute is not None
 
@@ -425,4 +429,4 @@ def test_bug14_corrupt_index_is_execution_failed(tmp_path: Path, content: str) -
         get(GetEnvironmentParams(id="env-1"))
 
     assert excinfo.value.code == int(WspErrorCode.EXECUTION_FAILED)
-    assert excinfo.value.data["reason"] == "index-corrupt"
+    assert excinfo.value.data["reason"] == "index-corrupt"  # type: ignore[unsupported-operation]

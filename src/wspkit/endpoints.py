@@ -71,7 +71,8 @@ ENVIRONMENT_PYTHON_VERSION_MAX_LEN: Final[int] = 32
 INITIALIZE_CLIENT_NAME_MAX_LEN: Final[int] = 255
 INITIALIZE_CLIENT_PROTOCOL_VERSION_MAX_LEN: Final[int] = 64
 
-
+# MAJOR.MINOR(.PATCH)? where each component is a non-negative integer
+# with no leading zeros (except a single ``0``).
 _PYTHON_VERSION_RE: Final = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?$")
 
 
@@ -520,7 +521,12 @@ def _validate_create_environment_params(
     # ---- python_version ----------------------------------------------
     python_version = _take(coerced, "python_version")
     py_str: str | None = None
-    if python_version is _MISSING or python_version is None or not isinstance(python_version, str) or python_version == "":
+    if (
+        python_version is _MISSING
+        or python_version is None
+        or not isinstance(python_version, str)
+        or python_version == ""
+    ):
         violations.append("python-version-required")
     else:
         py_str = python_version

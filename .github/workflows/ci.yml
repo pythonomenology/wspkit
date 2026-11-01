@@ -43,7 +43,7 @@ jobs:
         uses: pypa/hatch@f647ed70d49adb885f53a27d1c7f5bdaeacf2c60 # install
 
       - name: Run tests
-        run: hatch test --python ${{ matrix.python-version }} --randomize
+        run: hatch test --python ${{ matrix.python-version }} --parallel --randomize
 
   static-analysis:
     name: Static analysis
@@ -83,7 +83,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
 
       - name: Run zizmor
         run: uvx zizmor --min-severity low .

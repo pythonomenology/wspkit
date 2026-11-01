@@ -94,7 +94,8 @@ def _run_wsp_cli(
     ]
     return subprocess.run(
         cmd,
-        check=False, capture_output=True,
+        check=False,
+        capture_output=True,
         env=env if env is not None else _build_env(),
         timeout=timeout,
     )

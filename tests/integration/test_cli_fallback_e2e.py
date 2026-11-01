@@ -110,7 +110,8 @@ def _run_cli(
     env["PYTHONPATH"] = str(_SRC_DIR) + (os.pathsep + existing if existing else "")
     return subprocess.run(
         [sys.executable, "-c", _CLI_DRIVER, *argv],
-        check=False, capture_output=True,
+        check=False,
+        capture_output=True,
         env=env,
         timeout=timeout,
     )

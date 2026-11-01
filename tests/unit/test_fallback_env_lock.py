@@ -26,15 +26,15 @@ from typing import Any
 
 import pytest
 
-from wispy.cli import fallback as fb
-from wispy.cli.state import FallbackState
-from wispy.endpoints import (
+from wspkit.cli import fallback as fb
+from wspkit.cli.state import FallbackState
+from wspkit.endpoints import (
     CreateEnvironmentParams,
     DeleteEnvironmentParams,
     ExecuteParams,
     GetEnvironmentParams,
 )
-from wispy.errors import WspError, WspErrorCode
+from wspkit.errors import WspError, WspErrorCode
 
 pytestmark = pytest.mark.skipif(os.name == "nt", reason="POSIX flock and sh scripts")
 
@@ -58,14 +58,14 @@ def _fake_venv(_interpreter: Any, target: Any) -> None:
 @pytest.fixture
 def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str, Path]:
     """A fallback registry holding one env, and a PATH dir with its own ``tool``."""
-    monkeypatch.setattr("wispy.cli.fallback.shutil.which", lambda name: f"/usr/bin/{name}")
-    monkeypatch.setattr("wispy.cli.fallback._create_venv", _fake_venv)
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr("wspkit.cli.fallback._create_venv", _fake_venv)
     registry = fb.make_fallback_registry(tmp_path / "state")
-    created = registry.lookup("environment/create")(CreateEnvironmentParams(name="demo", python_version="3.12"))
+    created = registry.lookup("environment/create")(CreateEnvironmentParams(name="demo", python_version="3.12"))  # type: ignore[not-callable]
     system_bin = tmp_path / "system-bin"
     system_bin.mkdir()
     _script(system_bin / "tool", "from-system-PATH")
-    return registry, created["id"], system_bin
+    return registry, created["id"], system_bin  # type: ignore[bad-index]
 
 
 def _call(registry: Any, method: str, params: Any) -> Any:
@@ -97,7 +97,7 @@ def test_delete_waits_for_a_running_execute_or_get(
         still_blocked.append(delete_thread.is_alive())
         return real_run(*args, **kwargs)
 
-    monkeypatch.setattr("wispy.cli.fallback.subprocess.run", run_with_delete_racing)
+    monkeypatch.setattr("wspkit.cli.fallback.subprocess.run", run_with_delete_racing)
 
     if method == "environment/execute":
         params = ExecuteParams(id=env_id, argv=("tool",), env={"PATH": str(system_bin)})
@@ -162,7 +162,7 @@ def test_delete_unlists_before_removing_the_directory(
         msg = "process killed"
         raise KeyboardInterrupt(msg)
 
-    monkeypatch.setattr("wispy.cli.fallback.shutil.rmtree", killed_during_rmtree)
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.rmtree", killed_during_rmtree)
     with pytest.raises(KeyboardInterrupt):
         _call(registry, "environment/delete", DeleteEnvironmentParams(id=env_id))
     assert listed_during_removal == [[]]

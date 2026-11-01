@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from wispy.framing import FrameDecoder, encode_frame
+from wspkit.framing import FrameDecoder, encode_frame
 
 _SRC_DIR = Path(__file__).resolve().parents[2] / "src"
 
@@ -36,7 +36,7 @@ _EXIT = {"jsonrpc": "2.0", "method": "exit"}
 # dataclass itself, which must serialize (bug 2).
 _SERVER_SCRIPT = """
 import asyncio, sys, time
-from wispy import Capabilities, HandlerRegistry, run_stdio
+from wspkit import Capabilities, HandlerRegistry, run_stdio
 
 registry = HandlerRegistry()
 registry.register("initialize", lambda _p: Capabilities(methods=tuple(registry.methods())))
@@ -98,7 +98,7 @@ def _finish(proc: subprocess.Popen[bytes]) -> bytes:
 
 
 def _run_cli(argv: list[str], *, timeout: float = 60.0) -> subprocess.CompletedProcess[bytes]:
-    cmd = [sys.executable, "-c", "import sys; from wispy.cli.main import main; sys.exit(main(sys.argv[1:]))", *argv]
+    cmd = [sys.executable, "-c", "import sys; from wspkit.cli.main import main; sys.exit(main(sys.argv[1:]))", *argv]
     return subprocess.run(cmd, check=False, capture_output=True, env=_env(), timeout=timeout)
 
 
@@ -197,7 +197,7 @@ def test_bug5_tool_mode_through_the_parser(tmp_path: Path) -> None:
     _write_template_config(config)
 
     proc = _run_cli(
-        ["--tool", sys.executable, "-m", "wispy", "--config", str(config), "environment/get", "--id", "env-7"],
+        ["--tool", sys.executable, "-m", "wspkit", "--config", str(config), "environment/get", "--id", "env-7"],
     )
 
     assert proc.returncode == 0, proc.stderr.decode()
@@ -211,14 +211,14 @@ def test_bug5_tool_mode_through_the_parser(tmp_path: Path) -> None:
 
 def test_bug8_child_startup_error_is_shown_to_the_user(tmp_path: Path) -> None:
     config = tmp_path / "bad.toml"
-    config.write_text('[handlers."environment/list"]\ncommand = ["definitely-not-a-real-binary-wispy"]\n')
+    config.write_text('[handlers."environment/list"]\ncommand = ["definitely-not-a-real-binary-wspkit"]\n')
 
     proc = _run_cli(["--config", str(config), "environment/list"])
 
     assert proc.returncode == 1
     stderr = proc.stderr.decode()
     assert "config error" in stderr
-    assert "definitely-not-a-real-binary-wispy" in stderr
+    assert "definitely-not-a-real-binary-wspkit" in stderr
 
 
 def test_bug8_chatty_child_stderr_does_not_block(tmp_path: Path) -> None:
@@ -227,7 +227,7 @@ def test_bug8_chatty_child_stderr_does_not_block(tmp_path: Path) -> None:
         textwrap.dedent(
             """\
             import asyncio, sys
-            from wispy import Capabilities, HandlerRegistry, run_stdio
+            from wspkit import Capabilities, HandlerRegistry, run_stdio
 
             registry = HandlerRegistry()
             registry.register("initialize", lambda _p: Capabilities(methods=tuple(registry.methods())))

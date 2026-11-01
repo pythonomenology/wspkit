@@ -302,9 +302,7 @@ def test_subprocess_template_without_mode_rejected(tmp_path: Path) -> None:
     """
     p = _write(
         tmp_path / "cfg.toml",
-        '[handlers."environment/list"]\ncommand = ["echo"]\n'
-        'result = "json"\n'
-        "template = { id = \"x\" }\n",
+        '[handlers."environment/list"]\ncommand = ["echo"]\nresult = "json"\ntemplate = { id = "x" }\n',
     )
     with pytest.raises(ConfigError) as excinfo:
         load_config(p)

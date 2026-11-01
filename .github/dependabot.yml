@@ -5,6 +5,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Wait before adopting brand-new releases, reducing exposure to a
+    # compromised or yanked version being pulled in immediately.
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns:
@@ -15,3 +19,5 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7

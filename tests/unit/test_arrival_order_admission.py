@@ -22,11 +22,11 @@ from typing import Any
 
 import pytest
 
-from wispy.endpoints import PROTOCOL_VERSION, Capabilities
-from wispy.framing import FrameDecoder, encode_frame
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
-from wispy.transport import StdioTransport
+from wspkit.endpoints import PROTOCOL_VERSION, Capabilities
+from wspkit.framing import FrameDecoder, encode_frame
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
+from wspkit.transport import StdioTransport
 
 _INIT = {
     "jsonrpc": "2.0",
@@ -79,7 +79,7 @@ def _run(messages: list[Any], registry: HandlerRegistry) -> tuple[int, list[Any]
     with os.fdopen(read_fd, "rb") as stdin:
         transport = StdioTransport(stdin=stdin, stdout=out, stderr=io.StringIO())
         status = asyncio.run(run_stdio(registry, transport=transport))
-    return status, [json.loads(p) for p in FrameDecoder().feed(out.getvalue())]
+    return status, [json.loads(p) for p in FrameDecoder().feed(out.getvalue())]  # type: ignore[bad-argument-type]
 
 
 def _by_id(responses: list[Any]) -> dict[Any, Any]:

@@ -265,9 +265,9 @@ def serialize_response(
     back to their original JSON type, including JSON null.
 
     Objects exposing a ``to_jsonable()`` method (the wire data models in
-    :mod:`wispy.endpoints`) are converted through it, so handlers may
-    return :class:`~wispy.endpoints.Capabilities`,
-    :class:`~wispy.endpoints.Environment`, etc. directly. Any other
+    :mod:`wspkit.endpoints`) are converted through it, so handlers may
+    return :class:`~wspkit.endpoints.Capabilities`,
+    :class:`~wspkit.endpoints.Environment`, etc. directly. Any other
     non-JSON value raises :class:`TypeError`.
     """
     if isinstance(resp, list):
