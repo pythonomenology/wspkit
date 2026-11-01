@@ -49,6 +49,21 @@ name = "pythonomenology/wspkit"
 variant = "modern"
 logo = "images/logo.png"
 favicon = "images/logo.png"
+features = [
+  "navigation.instant",        # load pages without a full reload (needs site_url)
+  "navigation.instant.progress",  # thin progress bar on slower loads
+  "navigation.tabs",           # top-level sections as a tab bar under the header
+  "navigation.tabs.sticky",    # keep the tab bar pinned while scrolling
+  "navigation.sections",       # render nested sections as sidebar groups
+  "navigation.top",            # back-to-top button
+  "navigation.tracking",       # update the URL with the active anchor
+  "navigation.path",           # breadcrumbs above the page title
+  "toc.follow",                # keep the active TOC anchor in view
+  "content.code.copy",         # copy button on code blocks
+  "content.code.annotate",     # inline code annotations
+  "search.suggest",            # inline search completion
+  "search.highlight",          # highlight matches on the opened page
+]
 
 # Light/dark palette with a header toggle. Each entry is one scheme; the
 # toggle button switches between them (default = light, slate = dark).
@@ -65,3 +80,13 @@ primary = "indigo"
 accent = "cyan"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/pythonomenology/wspkit"
+name = "wspkit on GitHub"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/python"
+link = "https://pypi.org/project/wspkit/"
+name = "wspkit on PyPI"
