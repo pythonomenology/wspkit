@@ -16,9 +16,9 @@ from __future__ import annotations
 import contextlib
 import json
 import os
-import select
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -29,12 +29,6 @@ from wspkit.framing import DecodeError, FrameDecoder, encode_frame
 # its PYTHONPATH so it can ``import wspkit``.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
-
-# Empty file-descriptor lists for ``select.select``. Hoisted to module
-# scope so they carry an explicit element type rather than the
-# ambiguous ``list[Any]`` an inline ``[]`` would produce.
-_NO_FDS: list[int] = []
-
 
 # Driver script run by ``python -c``. Registers ``initialize`` and
 # ``shutdown`` handlers and drives ``run_stdio`` until the child exits.
@@ -97,6 +91,29 @@ def _send(proc: subprocess.Popen[bytes], message: dict[str, Any]) -> None:
     proc.stdin.flush()
 
 
+def _read_available(stream: Any, size: int, timeout: float) -> bytes | None:
+    """Read up to ``size`` bytes, or ``None`` on timeout, ``b""`` at EOF.
+
+    Portable replacement for ``select`` + ``os.read``: ``select`` on a
+    pipe fd is POSIX-only (Windows accepts sockets only), so the single
+    blocking read runs on a short-lived daemon thread bounded by
+    ``timeout``. Only one read is ever in flight because a timeout is a
+    test failure that stops the loop.
+    """
+    box: dict[str, bytes] = {}
+
+    def _read() -> None:
+        with contextlib.suppress(OSError, ValueError):
+            box["data"] = stream.read1(size) if hasattr(stream, "read1") else stream.read(size)
+
+    reader = threading.Thread(target=_read, daemon=True)
+    reader.start()
+    reader.join(timeout)
+    if reader.is_alive():
+        return None
+    return box.get("data", b"")
+
+
 def _read_one_frame(
     proc: subprocess.Popen[bytes],
     decoder: FrameDecoder,
@@ -118,17 +135,15 @@ def _read_one_frame(
         return item
 
     deadline = time.monotonic() + timeout
-    fd = proc.stdout.fileno()
     while True:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             msg = f"timed out waiting for response after {timeout}s"
             raise TimeoutError(msg)
-        rlist, _, _ = select.select([fd], _NO_FDS, _NO_FDS, remaining)
-        if not rlist:
+        chunk = _read_available(proc.stdout, 65536, remaining)
+        if chunk is None:
             msg = f"timed out waiting for response after {timeout}s"
             raise TimeoutError(msg)
-        chunk = os.read(fd, 65536)
         if not chunk:
             msg = "child closed stdout before producing a frame"
             raise EOFError(msg)

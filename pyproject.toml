@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "wspkit"
-version = "0.0.1"
+dynamic = ["version"]
 description = "The whitespace between your workflow tool and everything that talks to it. A Python library providing the JSON-RPC server for the Workflow Server Protocol (WSP)."
 readme = "README.md"
 license = "MIT"
@@ -48,6 +48,11 @@ Source = "https://github.com/pythonomenology/wspkit/"
 [project.scripts]
 wsp = "wspkit.cli.main:main"
 
+# Version is derived from the latest git tag (e.g. tag v0.0.1 -> 0.0.1).
+# No version lives in this file; the tag is the single source of truth.
+[tool.hatch.version]
+source = "vcs"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/wspkit"]
 
@@ -80,5 +85,23 @@ serve = "zensical serve {args}"
 build = "zensical build {args}"
 deploy = "zensical gh-deploy --force {args}"
 
+# Release tooling. All scripts are stdlib-only and shell out to git, so the
+# environment needs no dependencies.
+#   hatch run release:tag <version>     prepare + tag + push (triggers release.yml)
+#   hatch run release:changelog <ver>   roll Unreleased into a dated version section
+#   hatch run release:notes <ver>       print a version's changelog notes
+#   hatch run release:github <version>  open the prefilled GitHub release form
+[tool.hatch.envs.release]
+detached = true
+
+[tool.hatch.envs.release.scripts]
+tag = "python scripts/release.py {args}"
+changelog = "python scripts/changelog.py release {args}"
+notes = "python scripts/changelog.py extract {args}"
+github = "python scripts/release_github.py {args}"
+
 [tool.pyrefly]
 preset = "strict"
+# Release scripts import their siblings (e.g. release.py imports changelog);
+# they run with scripts/ on sys.path, so treat it as an import root too.
+search-path = ["src", "scripts"]

@@ -9,6 +9,9 @@ channel remains a pure framing stream.
 from __future__ import annotations
 
 import asyncio
+import io
+import os
+import stat
 import sys
 import threading
 from typing import TYPE_CHECKING, BinaryIO, TextIO
@@ -74,24 +77,43 @@ class StdioTransport:
 
     async def _attach(self) -> None:
         loop = asyncio.get_running_loop()
-        reader = asyncio.StreamReader()
-        protocol = asyncio.StreamReaderProtocol(reader)
+        if self._stdin_is_pollable():
+            reader = asyncio.StreamReader()
+            protocol = asyncio.StreamReaderProtocol(reader)
+            try:
+                pipe_transport, _ = await loop.connect_read_pipe(lambda: protocol, self._stdin)
+            except (ValueError, OSError, NotImplementedError):
+                pass
+            else:
+                self._reader = reader
+                self._pipe_transport = pipe_transport
+                return
+        # Regular files and in-memory buffers cannot be watched by the
+        # event loop, so read them on a daemon thread and hand chunks
+        # back through the queue. The thread is a daemon so a read
+        # blocked on an open stdin never holds up interpreter exit.
+        self._chunks = asyncio.Queue()
+        threading.Thread(
+            target=self._read_blocking,
+            args=(loop, self._chunks, self._chunk_slots),
+            name="wspkit-stdin-reader",
+            daemon=True,
+        ).start()
+
+    def _stdin_is_pollable(self) -> bool:
+        """Whether stdin is a pipe/socket/char device the loop can watch.
+
+        POSIX ``connect_read_pipe`` rejects a regular file, but the
+        Windows Proactor loop accepts the handle and only fails on the
+        later read, so the kind is checked up front rather than inferred
+        from a raised error. Anything else (regular file, in-memory
+        buffer, closed or missing fd) is read on the thread instead.
+        """
         try:
-            pipe_transport, _ = await loop.connect_read_pipe(lambda: protocol, self._stdin)
-        except (ValueError, OSError, NotImplementedError):
-            # ``connect_read_pipe`` only accepts pipes, sockets and
-            # character devices. The thread is a daemon so a read
-            # blocked on an open stdin never holds up interpreter exit.
-            self._chunks = asyncio.Queue()
-            threading.Thread(
-                target=self._read_blocking,
-                args=(loop, self._chunks, self._chunk_slots),
-                name="wspkit-stdin-reader",
-                daemon=True,
-            ).start()
-            return
-        self._reader = reader
-        self._pipe_transport = pipe_transport
+            mode = os.fstat(self._stdin.fileno()).st_mode
+        except (OSError, ValueError, AttributeError, io.UnsupportedOperation):
+            return False
+        return stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode) or stat.S_ISCHR(mode)
 
     def _read_blocking(
         self,

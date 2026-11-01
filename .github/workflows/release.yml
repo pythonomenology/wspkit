@@ -78,30 +78,45 @@ jobs:
       # Create the release and attach assets.
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
       - name: Download build artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: dist
           path: dist
 
-      - name: Create draft, attach artifacts, then publish
+      - name: Extract release notes from the changelog
+        run: python3 scripts/changelog.py extract "${GITHUB_REF_NAME#v}" > "${RUNNER_TEMP}/notes.md"
+
+      - name: Create draft release and upload artifacts
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # 1. Create the release as a draft bound to the pushed tag.
+          # Create the release as a draft bound to the pushed tag, with the
+          # changelog section for this version as the release notes, then copy
+          # the built sdist and wheel into it. Nothing is public yet.
           gh release create "${GITHUB_REF_NAME}" \
             --repo "${GITHUB_REPOSITORY}" \
             --title "${GITHUB_REF_NAME}" \
-            --generate-notes \
+            --notes-file "${RUNNER_TEMP}/notes.md" \
             --verify-tag \
             --draft
-          # 2. Copy the built sdist and wheel into the draft release.
           gh release upload "${GITHUB_REF_NAME}" dist/* \
             --repo "${GITHUB_REPOSITORY}" \
             --clobber
-          # 3. Publish. With repo Immutable Releases enabled, publishing
-          #    seals the tag and assets so they can no longer be altered.
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Flip the draft to published. With repo Immutable Releases enabled,
+          # publishing seals the tag and assets so they can no longer be altered.
           gh release edit "${GITHUB_REF_NAME}" \
             --repo "${GITHUB_REPOSITORY}" \
             --draft=false
