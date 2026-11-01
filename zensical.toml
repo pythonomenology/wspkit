@@ -14,27 +14,32 @@ site_url = "https://pythonomenology.github.io/wspkit/"
 copyright = "&copy; 2026 Cary Hawkins"
 docs_dir = "docs"
 site_dir = "site"
+extra_css = ["stylesheets/extra.css"]
 nav = [
   { "Home" = "index.md" },
   { "Getting started" = "getting-started.md" },
   { "Concepts" = [
+    "concepts/index.md",
     { "Protocol overview" = "concepts/protocol.md" },
     { "Lifecycle" = "concepts/lifecycle.md" },
     { "Error model" = "concepts/errors.md" },
     { "Transport & framing" = "concepts/transport.md" },
   ] },
   { "Guides" = [
+    "guides/index.md",
     { "Embed wspkit in a workflow tool" = "guides/embed-library.md" },
     { "Ship a Config_File" = "guides/config-file.md" },
     { "Adapt an existing CLI" = "guides/adapt-cli.md" },
     { "Use the wsp CLI" = "guides/cli.md" },
   ] },
   { "Reference" = [
+    "reference/index.md",
     { "WSP methods" = "reference/methods.md" },
     { "Public API" = "reference/api.md" },
     { "Exit codes" = "reference/exit-codes.md" },
   ] },
   { "Development" = [
+    "development/index.md",
     { "Contributing" = "development/contributing.md" },
     { "Testing" = "development/testing.md" },
   ] },
@@ -49,6 +54,9 @@ name = "pythonomenology/wspkit"
 variant = "modern"
 logo = "images/logo.png"
 favicon = "images/logo.png"
+custom_dir = "overrides"
+font.text = "Inter"
+font.code = "JetBrains Mono"
 features = [
   "navigation.instant",        # load pages without a full reload (needs site_url)
   "navigation.instant.progress",  # thin progress bar on slower loads
@@ -63,21 +71,23 @@ features = [
   "content.code.annotate",     # inline code annotations
   "search.suggest",            # inline search completion
   "search.highlight",          # highlight matches on the opened page
+  "navigation.indexes",        # a section's index.md is its landing page
+  "announce.dismiss",          # dismissible announcement bar
 ]
 
 # Light/dark palette with a header toggle. Each entry is one scheme; the
 # toggle button switches between them (default = light, slate = dark).
 [[project.theme.palette]]
 scheme = "default"
-primary = "indigo"
-accent = "cyan"
+primary = "custom"
+accent = "custom"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 scheme = "slate"
-primary = "indigo"
-accent = "cyan"
+primary = "custom"
+accent = "custom"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
 
@@ -90,3 +100,13 @@ name = "wspkit on GitHub"
 icon = "fontawesome/brands/python"
 link = "https://pypi.org/project/wspkit/"
 name = "wspkit on PyPI"
+
+# Hover previews for internal links pointing at these pages.
+[[project.markdown_extensions.zensical.extensions.preview.configurations]]
+targets.include = [
+  "concepts/*",
+  "guides/*",
+  "reference/*",
+  "development/*",
+  "getting-started.md",
+]
