@@ -1,9 +1,9 @@
-"""Entry point for ``python -m wispy --config <path>``.
+"""Entry point for ``python -m wspkit --config <path>``.
 
-Loads a WSP Config_File, builds a :class:`~wispy.registry.HandlerRegistry`
+Loads a WSP Config_File, builds a :class:`~wspkit.registry.HandlerRegistry`
 from its entries plus the built-in ``initialize``/``shutdown`` handlers,
 and runs the stdio server. Config-time failures are surfaced on stderr
-in the form ``wispy: config error: <path>: <reason>`` and the process
+in the form ``wspkit: config error: <path>: <reason>`` and the process
 exits with status 1 *before* any transport is constructed.
 
 A request for a defined WSP method that the
@@ -21,11 +21,11 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from wispy.config import ConfigError, load_config, make_handler
-from wispy.endpoints import PROTOCOL_VERSION, Capabilities
-from wispy.errors import DuplicateRegistrationError
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
+from wspkit.config import ConfigError, load_config, make_handler
+from wspkit.endpoints import PROTOCOL_VERSION, Capabilities
+from wspkit.errors import DuplicateRegistrationError
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -35,9 +35,9 @@ def _config_error(path: Path, reason: str) -> int:
     """Write the conventional config-error line to stderr and return 1.
 
     Centralised so every config-time exit point produces an identical
-    line shape: ``wispy: config error: <path>: <reason>\\n``.
+    line shape: ``wspkit: config error: <path>: <reason>\\n``.
     """
-    sys.stderr.write(f"wispy: config error: {path}: {reason}\n")
+    sys.stderr.write(f"wspkit: config error: {path}: {reason}\n")
     return 1
 
 
@@ -53,6 +53,14 @@ def _build_registry(
     layer) surfaces as a duplicate-registration config error rather
     than silently overriding the built-ins.
 
+    ``initialize`` returns the JSON-serialisable form of
+    :class:`~wspkit.endpoints.Capabilities` rather than the dataclass
+    itself: the dispatcher hands the return value straight to the
+    JSON-RPC serializer (which only knows how to encode primitives),
+    while the lifecycle FSM merely caches the value opaquely. The
+    dispatcher logs a benign warning that the result is not a
+    :class:`Capabilities` instance; that is acceptable here since the
+    cache value is never inspected for shape elsewhere in the runtime.
     """
     registry = HandlerRegistry()
 
@@ -60,7 +68,7 @@ def _build_registry(
         return Capabilities(
             methods=tuple(registry.methods()),
             protocol_version=PROTOCOL_VERSION,
-        )
+        ).to_jsonable()
 
     def _shutdown(_params: Any) -> None:
         return None
@@ -91,8 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     only when this module is run as ``__main__``.
     """
     parser = argparse.ArgumentParser(
-        prog="python -m wispy",
-        description=("Run the wispy WSP server over stdio with handlers loaded from a Config_File."),
+        prog="python -m wspkit",
+        description=("Run the wspkit WSP server over stdio with handlers loaded from a Config_File."),
     )
     parser.add_argument(
         "--config",

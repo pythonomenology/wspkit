@@ -7,12 +7,12 @@ once with ``p`` as its argument and (when the handler returns a value
 ``v``) emit a :class:`JsonRpcResponse` whose ``id`` equals ``i`` and
 whose ``result`` equals ``v``.
 
-The test drives :func:`wispy.dispatcher.dispatch` against a
+The test drives :func:`wspkit.dispatcher.dispatch` against a
 :class:`LifecycleManager` advanced past the ``-32002`` initialize gate
 (via :meth:`LifecycleManager.on_initialize_success`) so that
 non-``initialize`` requests are admitted. Method names are drawn from
 the user-defined namespace -- explicitly excluded from
-:data:`wispy.endpoints.WSP_METHODS` -- so the dispatcher's WSP
+:data:`wspkit.endpoints.WSP_METHODS` -- so the dispatcher's WSP
 parameter validators do not fire. This isolates the property under
 test (handler invocation and response shape) from the orthogonal
 property of WSP-method param validation.
@@ -31,11 +31,11 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.dispatcher import dispatch
-from wispy.endpoints import WSP_METHODS, Capabilities
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import JsonRpcRequest, JsonRpcResponse
-from wispy.registry import HandlerRegistry
+from wspkit.dispatcher import dispatch
+from wspkit.endpoints import WSP_METHODS, Capabilities
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import JsonRpcRequest, JsonRpcResponse
+from wspkit.registry import HandlerRegistry
 
 # A canonical Capabilities object used to advance every fresh
 # LifecycleManager into the INITIALIZED state. The actual capability

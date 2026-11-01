@@ -2,7 +2,7 @@
 
 ``encode_frame``
 round-trips through ``FrameDecoder``, the decoder recovers from arbitrary
-garbage prefixes by emitting a :class:`~wispy.framing.DecodeError`, and the
+garbage prefixes by emitting a :class:`~wspkit.framing.DecodeError`, and the
 decoder is invariant to how a sequence of valid frames is chunked across
 ``feed`` calls.
 """
@@ -12,7 +12,7 @@ from __future__ import annotations
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from wispy.framing import DecodeError, FrameDecoder, encode_frame
+from wspkit.framing import DecodeError, FrameDecoder, encode_frame
 
 # ---------------------------------------------------------------------------
 # Strategies

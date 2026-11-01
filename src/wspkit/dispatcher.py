@@ -28,7 +28,7 @@ Top-level guarantees:
 
 The transport receives an :class:`ExitDispatch` whenever an ``exit``
 notification is processed; the carried ``status`` is the value the
-:class:`~wispy.lifecycle.LifecycleManager` wants the process to exit
+:class:`~wspkit.lifecycle.LifecycleManager` wants the process to exit
 with, and ``response`` carries any per-entry responses that should be
 flushed before the runtime tears down.
 """
@@ -42,15 +42,15 @@ import traceback
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from wispy.endpoints import WSP_METHODS, Capabilities
-from wispy.errors import (
+from wspkit.endpoints import WSP_METHODS, Capabilities
+from wspkit.errors import (
     JsonRpcErrorCode,
     ProtocolError,
     WspError,
     WspErrorCode,
 )
-from wispy.lifecycle import Allow, Exit, LifecycleManager, RejectWith
-from wispy.protocol import (
+from wspkit.lifecycle import Allow, Exit, LifecycleManager, RejectWith
+from wspkit.protocol import (
     JsonRpcError,
     JsonRpcRequest,
     JsonRpcResponse,
@@ -60,7 +60,7 @@ from wispy.protocol import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from wispy.registry import HandlerRegistry
+    from wspkit.registry import HandlerRegistry
 
 __all__ = ["ExitDispatch", "dispatch"]
 

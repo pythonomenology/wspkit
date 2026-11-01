@@ -19,18 +19,18 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.dispatcher import dispatch
-from wispy.endpoints import Capabilities
-from wispy.errors import ProtocolError, WspError, WspErrorCode
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import (
+from wspkit.dispatcher import dispatch
+from wspkit.endpoints import Capabilities
+from wspkit.errors import ProtocolError, WspError, WspErrorCode
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import (
     _UNSET,
     JsonRpcError,
     JsonRpcRequest,
     JsonRpcResponse,
     serialize_response,
 )
-from wispy.registry import HandlerRegistry
+from wspkit.registry import HandlerRegistry
 
 # Method name deliberately not in ``WSP_METHODS`` so the dispatcher
 # skips param and result validation and goes straight to the handler.

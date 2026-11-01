@@ -23,10 +23,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from wispy.framing import DecodeError, FrameDecoder, encode_frame
+from wspkit.framing import DecodeError, FrameDecoder, encode_frame
 
 # Repo root resolved from this file; the driver child needs ``src/`` on
-# its PYTHONPATH so it can ``import wispy``.
+# its PYTHONPATH so it can ``import wspkit``.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 
@@ -39,16 +39,19 @@ _NO_FDS: list[int] = []
 # Driver script run by ``python -c``. Registers ``initialize`` and
 # ``shutdown`` handlers and drives ``run_stdio`` until the child exits.
 #
-# The ``initialize`` handler returns the ``to_jsonable()`` dict form of
-# :class:`~wispy.endpoints.Capabilities`; the dispatcher accepts either
-# that or the dataclass itself.
+# The ``initialize`` handler returns the JSON-serialisable ``dict`` form
+# of :class:`~wspkit.endpoints.Capabilities`. The lifecycle manager only
+# requires *something* to cache; the dispatcher's response codec needs a
+# JSON-friendly value, which a dataclass instance is not. The driver
+# emits a benign ``warning: initialize handler did not return
+# Capabilities`` line to stderr, which the test ignores.
 _DRIVER_SCRIPT = """
 import asyncio
 import sys
 
-from wispy.endpoints import Capabilities
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
+from wspkit.endpoints import Capabilities
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
 
 registry = HandlerRegistry()
 

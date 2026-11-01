@@ -1,8 +1,8 @@
 """Property tests for the WSP JSON-RPC dispatcher.
 
 This module hosts the wire-form behavior of
-:func:`wispy.dispatcher.dispatch` end-to-end through
-:func:`wispy.protocol.parse_message`:
+:func:`wspkit.dispatcher.dispatch` end-to-end through
+:func:`wspkit.protocol.parse_message`:
 
 * Response well-formedness and id preservation.
 * Notifications produce no response.
@@ -21,7 +21,7 @@ Conventions used throughout the module:
   priority order over the codec/dispatcher error
   classification, not over lifecycle gating.
 * Identity handlers (``params -> params``) are registered against
-  method names that are NOT in :data:`wispy.endpoints.WSP_METHODS`,
+  method names that are NOT in :data:`wspkit.endpoints.WSP_METHODS`,
   so the dispatcher's per-method validator step is bypassed for the
   notification, well-formedness, and batch-ordering properties.
   The error-code priority property deliberately registers WSP
@@ -37,16 +37,16 @@ from typing import Any
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
-from wispy.dispatcher import dispatch
-from wispy.endpoints import WSP_METHODS, Capabilities
-from wispy.errors import JsonRpcErrorCode
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import (
+from wspkit.dispatcher import dispatch
+from wspkit.endpoints import WSP_METHODS, Capabilities
+from wspkit.errors import JsonRpcErrorCode
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import (
     JsonRpcResponse,
     parse_message,
     serialize_response,
 )
-from wispy.registry import HandlerRegistry
+from wspkit.registry import HandlerRegistry
 
 # --------------------------------------------------------------------- #
 # Constants and shared helpers.

@@ -2,7 +2,7 @@
 
 Attempting to bind
 a method name that is already registered MUST raise
-:class:`wispy.errors.DuplicateRegistrationError` and leave the registry's
+:class:`wspkit.errors.DuplicateRegistrationError` and leave the registry's
 prior state unchanged.
 """
 
@@ -14,8 +14,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.errors import DuplicateRegistrationError
-from wispy.registry import HandlerRegistry
+from wspkit.errors import DuplicateRegistrationError
+from wspkit.registry import HandlerRegistry
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,7 +26,7 @@ def _make_handler(name: str) -> Callable[[Any], str]:
 
     Each handler is a fresh function object so identity comparisons can
     detect any silent overwrite by the registry. The returned value is a
-    callable matching the :data:`wispy.registry.Handler` protocol.
+    callable matching the :data:`wspkit.registry.Handler` protocol.
     """
 
     def handler(_params: Any, _bound_name: str = name) -> str:

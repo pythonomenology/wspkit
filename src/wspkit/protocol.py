@@ -33,7 +33,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Final
 
-from wispy.errors import JsonRpcErrorCode
+from wspkit.errors import JsonRpcErrorCode
 
 __all__ = [
     "JsonRpcError",

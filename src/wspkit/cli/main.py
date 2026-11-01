@@ -4,7 +4,7 @@ This module wires up the user-facing ``wsp`` command. The user-facing
 surface is:
 
 * :func:`build_parser` -- builds the argparse layout dynamically from
-  the WSP method registry in :mod:`wispy.endpoints` so subcommands and
+  the WSP method registry in :mod:`wspkit.endpoints` so subcommands and
   parameter flags stay in lock-step with the protocol surface.
 * :func:`merge_params` -- merges ``--params-json -`` JSON with explicit
   ``--<param>`` flag values, with flags shadowing JSON entries.
@@ -17,7 +17,7 @@ surface is:
 
   1. ``--tool ARGV...``: launch the named child Workflow_Tool
      subprocess and route the call through :class:`WspClient`.
-  2. ``--config PATH``: launch ``python -m wispy --config PATH`` as a
+  2. ``--config PATH``: launch ``python -m wspkit --config PATH`` as a
      child and route the call through :class:`WspClient`.
   3. Neither flag: run the built-in fallback Workflow_Tool
      **in-process**. The design narrates a ``--serve-fallback``
@@ -26,7 +26,7 @@ surface is:
      :func:`make_fallback_registry` because (a) it still satisfies
      the requirement that the fallback is invoked when no
      target/config is given, (b) it avoids a recursive
-     ``python -m wispy.cli`` step that adds latency without any
+     ``python -m wspkit.cli`` step that adds latency without any
      protocol benefit, and (c) the
      dispatcher and lifecycle code paths are identical regardless of
      transport. Behaviour-wise the in-process path is indistinguishable
@@ -40,15 +40,13 @@ import asyncio
 import json
 import sys
 from dataclasses import fields, is_dataclass
-from pathlib import Path
 from typing import Any
 
-from wispy.cli._exit_codes import ExitCode
-from wispy.cli.client import _RESPONSE_TIMEOUT_S, WspClient, _result_from_error_response
-from wispy.cli.fallback import make_fallback_registry
-from wispy.config import configured_timeout
-from wispy.dispatcher import ExitDispatch, dispatch
-from wispy.endpoints import (
+from wspkit.cli._exit_codes import ExitCode
+from wspkit.cli.client import WspClient, _result_from_error_response
+from wspkit.cli.fallback import make_fallback_registry
+from wspkit.dispatcher import ExitDispatch, dispatch
+from wspkit.endpoints import (
     PROTOCOL_VERSION,
     Capabilities,
     CreateEnvironmentParams,
@@ -56,8 +54,8 @@ from wispy.endpoints import (
     ExecuteParams,
     GetEnvironmentParams,
 )
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import _UNSET, JsonRpcRequest, JsonRpcResponse, _json_default
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import _UNSET, JsonRpcRequest, JsonRpcResponse
 
 __all__ = ["ExitCode", "build_parser", "main", "merge_params"]
 
@@ -65,11 +63,6 @@ __all__ = ["ExitCode", "build_parser", "main", "merge_params"]
 # Maximum size of a ``--params-json -`` stdin payload. Anything larger
 # is rejected with a usage error so we never buffer unbounded input.
 _MAX_STDIN_BYTES = 1024 * 1024  # 1 MiB
-
-# Slack added to a Config_File entry's own ``timeout`` when sizing how
-# long to wait for its response, so the child's timeout error (which
-# names the command) reaches the user before ours does.
-_CONFIG_TIMEOUT_SLACK_S = 5.0
 
 
 # Method names exposed as CLI subcommands. Excludes lifecycle methods
@@ -95,34 +88,6 @@ _METHOD_PARAMS_CLASS: dict[str, type] = {
 }
 
 
-def _env_pair(value: str) -> tuple[str, str]:
-    """argparse ``type`` for ``--env KEY=VALUE``."""
-    key, sep, val = value.partition("=")
-    if not sep or not key:
-        msg = f"expected KEY=VALUE, got {value!r}"
-        raise argparse.ArgumentTypeError(msg)
-    return key, val
-
-
-# Params fields that are not plain strings need their own flag shape.
-# ``argv`` takes every remaining argument (so the command may contain
-# its own ``-flags``) and must therefore come last; ``env`` may be
-# repeated and is collected into a dict by ``_flag_params_for_method``.
-_FIELD_FLAG_KWARGS: dict[str, dict[str, Any]] = {
-    "argv": {
-        "nargs": argparse.REMAINDER,
-        "metavar": "ARG",
-        "help": "Command to run; must be the last flag (everything after it is the command).",
-    },
-    "env": {
-        "action": "append",
-        "type": _env_pair,
-        "metavar": "KEY=VALUE",
-        "help": "Environment variable for the command; may be repeated.",
-    },
-}
-
-
 def build_parser() -> argparse.ArgumentParser:
     """Build the WSP_CLI argument parser.
 
@@ -136,9 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
     enforced by :func:`main` rather than by an argparse mutex group:
     ``--tool`` uses ``argparse.REMAINDER`` so it can capture an
     arbitrary child argv, and ``REMAINDER`` interacts poorly with
-    ``add_mutually_exclusive_group``. For the same reason the
-    subcommand ends up inside ``--tool``'s capture; :func:`main` splits
-    it back out (see :func:`_split_tool_argv`).
+    ``add_mutually_exclusive_group``.
     """
     parser = argparse.ArgumentParser(prog="wsp")
     parser.add_argument(
@@ -146,9 +109,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs=argparse.REMAINDER,
         default=None,
         help=(
-            "Argv of the target Workflow_Tool's WSP server, followed by the method subcommand: "
-            "wsp --tool mytool serve environment/list. The child argv ends at the first "
-            "argument naming a method."
+            "Argv of the target Workflow_Tool's WSP server. Everything after --tool is forwarded to the child process."
         ),
     )
     parser.add_argument(
@@ -173,12 +134,10 @@ def build_parser() -> argparse.ArgumentParser:
         # Allow ``--params-json -`` after the subcommand name as well,
         # so users do not have to remember which side of the
         # subcommand the flag goes on.
-        # ``SUPPRESS`` matters: a ``None`` default here would overwrite
-        # a top-level ``--params-json -`` given before the subcommand.
         sp.add_argument(
             "--params-json",
             dest="params_json",
-            default=argparse.SUPPRESS,
+            default=None,
         )
         params_cls = _METHOD_PARAMS_CLASS.get(method)
         if params_cls is not None and is_dataclass(params_cls):
@@ -187,11 +146,7 @@ def build_parser() -> argparse.ArgumentParser:
                 # conventional ``--kebab-case`` flag spelling, but
                 # keep the snake_case name on the ``args`` namespace
                 # so it round-trips into JSON-RPC params unchanged.
-                sp.add_argument(
-                    f"--{f.name.replace('_', '-')}",
-                    dest=f.name,
-                    **_FIELD_FLAG_KWARGS.get(f.name, {}),
-                )
+                sp.add_argument(f"--{f.name.replace('_', '-')}", dest=f.name)
     return parser
 
 
@@ -256,12 +211,8 @@ def _flag_params_for_method(args: argparse.Namespace, method: str) -> dict[str, 
         return flag_params
     for f in fields(params_cls):
         value = getattr(args, f.name, None)
-        if value is None:
-            continue
-        if f.name == "env":
-            # ``--env`` is an ``append`` of (KEY, VALUE) pairs.
-            value = dict(value)
-        flag_params[f.name] = value
+        if value is not None:
+            flag_params[f.name] = value
     return flag_params
 
 
@@ -283,27 +234,9 @@ def _build_params(
     return merge_params(stdin_params, flag_params)
 
 
-def _config_response_timeout(config_path: str, method: str) -> float:
-    """How long to wait for ``method``'s response from a ``--config`` child.
-
-    The default per-response timeout, or longer when the Config_File
-    gives ``method`` a ``timeout`` that would not fit in it.
-    """
-    entry_timeout = configured_timeout(Path(config_path), method)
-    if entry_timeout is None:
-        return _RESPONSE_TIMEOUT_S
-    return max(_RESPONSE_TIMEOUT_S, entry_timeout + _CONFIG_TIMEOUT_SLACK_S)
-
-
-async def _run_with_client(
-    argv: list[str],
-    method: str,
-    params: dict[str, Any],
-    *,
-    response_timeout: float = _RESPONSE_TIMEOUT_S,
-) -> int:
+async def _run_with_client(argv: list[str], method: str, params: dict[str, Any]) -> int:
     """Run a single WSP call through :class:`WspClient` over a child."""
-    async with WspClient(argv, response_timeout=response_timeout) as client:
+    async with WspClient(argv) as client:
         result = await client.call(method, params)
     if result.exit_code == ExitCode.SUCCESS:
         # ``result.value`` is the JSON-RPC ``result`` payload from the
@@ -372,30 +305,11 @@ async def _run_fallback_inprocess(method: str, params: dict[str, Any]) -> int:
         wire = {"jsonrpc": "2.0", "id": response.id, "error": error_dict}
         return _result_from_error_response(wire).exit_code
 
-    # Success path. Encode wire models the same way the server does, so
-    # a handler result that serializes over stdio also prints here.
-    sys.stdout.write(json.dumps(response.result, ensure_ascii=False, default=_json_default) + "\n")
+    # Success path. ``result`` is already JSON-serializable because
+    # every fallback handler returns either ``None`` or a
+    # ``to_jsonable()`` dict.
+    sys.stdout.write(json.dumps(response.result, ensure_ascii=False) + "\n")
     return ExitCode.SUCCESS
-
-
-def _split_tool_argv(parser: argparse.ArgumentParser, args: argparse.Namespace) -> argparse.Namespace:
-    """Split the method subcommand back out of ``--tool``'s capture.
-
-    ``--tool`` is ``argparse.REMAINDER``, so it swallows the subcommand
-    and its flags too. The child argv ends at the first argument that
-    names a CLI method; everything from there on is parsed as the
-    subcommand. Top-level flags given before ``--tool`` are kept.
-    """
-    tool: list[str] = args.tool
-    split = next((i for i, arg in enumerate(tool) if arg in _CLI_METHODS), None)
-    if split is None:
-        return args
-    sub_args = parser.parse_args(tool[split:])
-    sub_args.tool = tool[:split]
-    sub_args.config = args.config
-    if sub_args.params_json is None:
-        sub_args.params_json = args.params_json
-    return sub_args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -405,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
 
     * ``--tool ARGV...``: launch the named Workflow_Tool subprocess
       and route the WSP call through :class:`WspClient`.
-    * ``--config PATH``: launch ``python -m wispy --config PATH`` as a
+    * ``--config PATH``: launch ``python -m wspkit --config PATH`` as a
       child and route the WSP call through :class:`WspClient`.
     * Neither flag: run the built-in fallback in-process (see module
       docstring for the rationale behind this deliberate deviation
@@ -417,8 +331,6 @@ def main(argv: list[str] | None = None) -> int:
     """
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.tool is not None and args.method is None:
-        args = _split_tool_argv(parser, args)
 
     # The two flags are mutually exclusive. We
     # enforce it here rather than via ``add_mutually_exclusive_group``
@@ -426,10 +338,6 @@ def main(argv: list[str] | None = None) -> int:
     # interact poorly.
     if args.tool is not None and args.config is not None:
         parser.error("--tool and --config are mutually exclusive")
-        return ExitCode.USAGE_OR_UNSUPPORTED  # pragma: no cover
-
-    if args.tool is not None and not args.tool:
-        parser.error("--tool requires the argv of a WSP server before the method")
         return ExitCode.USAGE_OR_UNSUPPORTED  # pragma: no cover
 
     method = args.method
@@ -457,18 +365,11 @@ def main(argv: list[str] | None = None) -> int:
             child_argv = [
                 sys.executable,
                 "-m",
-                "wispy",
+                "wspkit",
                 "--config",
                 args.config,
             ]
-            return asyncio.run(
-                _run_with_client(
-                    child_argv,
-                    method,
-                    params,
-                    response_timeout=_config_response_timeout(args.config, method),
-                )
-            )
+            return asyncio.run(_run_with_client(child_argv, method, params))
         return asyncio.run(_run_fallback_inprocess(method, params))
     except (asyncio.TimeoutError, FileNotFoundError):
         # ``WspClient.__aenter__`` re-raises both; it has already

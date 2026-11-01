@@ -34,10 +34,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from wispy.framing import DecodeError, FrameDecoder, encode_frame
+from wspkit.framing import DecodeError, FrameDecoder, encode_frame
 
 # Repo root resolved from this file; the driver child needs ``src/`` on
-# its PYTHONPATH so it can ``import wispy`` regardless of how it was
+# its PYTHONPATH so it can ``import wspkit`` regardless of how it was
 # launched (Hatch's editable install + an explicit PYTHONPATH belt for
 # the suspenders).
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -68,9 +68,9 @@ _DRIVER_INITIALIZE_ONLY = """
 import asyncio
 import sys
 
-from wispy.endpoints import Capabilities
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
+from wspkit.endpoints import Capabilities
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
 
 registry = HandlerRegistry()
 
@@ -98,9 +98,9 @@ _DRIVER_WITH_SLOW = """
 import asyncio
 import sys
 
-from wispy.endpoints import Capabilities
-from wispy.registry import HandlerRegistry
-from wispy.server import run_stdio
+from wspkit.endpoints import Capabilities
+from wspkit.registry import HandlerRegistry
+from wspkit.server import run_stdio
 
 registry = HandlerRegistry()
 

@@ -1,7 +1,7 @@
 """Unit tests for the WSP endpoint parameter validators.
 
 Covers ``WSP_METHODS[name].validate_params`` for every method registered
-in :mod:`wispy.endpoints`. For each method this module asserts:
+in :mod:`wspkit.endpoints`. For each method this module asserts:
 
 * a passing example, where the validator returns the expected
   normalized params dataclass with the expected field values;
@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-from wispy.endpoints import (
+from wspkit.endpoints import (
     ENVIRONMENT_ID_MAX_LEN,
     ENVIRONMENT_NAME_MAX_LEN,
     ENVIRONMENT_PYTHON_VERSION_MAX_LEN,

@@ -1,4 +1,4 @@
-# Zensical configuration for the wispy documentation site.
+# Zensical configuration for the wspkit documentation site.
 #
 # Build:    hatch run docs:build
 # Preview:  hatch run docs:serve  (then open http://localhost:8000)
@@ -7,17 +7,17 @@
 # See https://zensical.org/docs/setup/basics/ for the full settings reference.
 
 [project]
-site_name = "wispy"
+site_name = "wspkit"
 site_description = "The whitespace between your workflow tool and everything that talks to it — a Python library implementing the Workflow Server Protocol (WSP)."
 site_author = "Cary Hawkins"
-site_url = "https://cjames23.github.io/wispy/"
+site_url = "https://pythonomenology.github.io/wspkit/"
 copyright = "&copy; 2026 Cary Hawkins"
 docs_dir = "docs"
 site_dir = "site"
 
 [project.repo]
-url = "https://github.com/cjames23/wispy/"
-name = "cjames23/wispy"
+url = "https://github.com/pythonomenology/wspkit/"
+name = "pythonomenology/wspkit"
 
 [project.theme]
 variant = "modern"
@@ -42,7 +42,7 @@ children = [
 [[project.nav]]
 title = "Guides"
 children = [
-  { title = "Embed wispy in a workflow tool", path = "guides/embed-library.md" },
+  { title = "Embed wspkit in a workflow tool", path = "guides/embed-library.md" },
   { title = "Ship a Config_File",             path = "guides/config-file.md"   },
   { title = "Adapt an existing CLI",          path = "guides/adapt-cli.md"     },
   { title = "Use the wsp CLI",                path = "guides/cli.md"           },

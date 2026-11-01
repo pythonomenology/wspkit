@@ -1,7 +1,7 @@
-"""wispy: Workflow Server Protocol (WSP) library.
+"""wspkit: Workflow Server Protocol (WSP) library.
 
 Re-exports the public API for tools that take a direct dependency on
-``wispy``. Programmatic users build a :class:`HandlerRegistry`, register
+``wspkit``. Programmatic users build a :class:`HandlerRegistry`, register
 :data:`Handler` callables for the WSP methods they implement, and call
 :func:`run_stdio` to serve the protocol over stdin/stdout. Users who only
 need the bundled CLI or the Config_File flow do not need to import from
@@ -11,7 +11,7 @@ this top-level module.
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
 
-from wispy.endpoints import (
+from wspkit.endpoints import (
     PROTOCOL_VERSION,
     Capabilities,
     DeleteAck,
@@ -19,23 +19,23 @@ from wispy.endpoints import (
     ExecuteResult,
     Package,
 )
-from wispy.errors import (
+from wspkit.errors import (
     DuplicateRegistrationError,
     JsonRpcErrorCode,
     ProtocolError,
     WspError,
     WspErrorCode,
 )
-from wispy.protocol import (
+from wspkit.protocol import (
     JsonRpcError,
     JsonRpcRequest,
     JsonRpcResponse,
 )
-from wispy.registry import Handler, HandlerRegistry
-from wispy.server import run_stdio
+from wspkit.registry import Handler, HandlerRegistry
+from wspkit.server import run_stdio
 
 try:
-    __version__: str = _pkg_version("wispy")
+    __version__: str = _pkg_version("wspkit")
 except PackageNotFoundError:  # pragma: no cover - source checkout
     __version__ = "0.0.0+unknown"
 

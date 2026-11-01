@@ -46,9 +46,9 @@ Exit-code mapping:
 * Any other JSON-RPC error                -> ``GENERIC_ERROR`` (1)
 
 The wire protocol uses Content-Length framing (LSP-style) provided by
-:mod:`wispy.framing`; JSON-RPC payloads are constructed manually here
+:mod:`wspkit.framing`; JSON-RPC payloads are constructed manually here
 because we only ever build a fixed handful of request shapes and that
-is simpler than going through :mod:`wispy.protocol`.
+is simpler than going through :mod:`wspkit.protocol`.
 """
 
 from __future__ import annotations
@@ -60,9 +60,9 @@ import sys
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
-from wispy.cli._exit_codes import ExitCode
-from wispy.errors import JsonRpcErrorCode
-from wispy.framing import DecodeError, FrameDecoder, encode_frame
+from wspkit.cli._exit_codes import ExitCode
+from wspkit.errors import JsonRpcErrorCode
+from wspkit.framing import DecodeError, FrameDecoder, encode_frame
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

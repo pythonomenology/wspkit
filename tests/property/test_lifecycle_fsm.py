@@ -1,22 +1,22 @@
 """Property test for the WSP server lifecycle FSM.
 
-The :class:`~wispy.lifecycle.LifecycleManager` is a small finite-state
+The :class:`~wspkit.lifecycle.LifecycleManager` is a small finite-state
 machine with one piece of cached side-state -- the
-:class:`~wispy.endpoints.Capabilities` returned by the first successful
+:class:`~wspkit.endpoints.Capabilities` returned by the first successful
 ``initialize`` request. This module drives the manager with a Hypothesis
 :class:`~hypothesis.stateful.RuleBasedStateMachine` that mirrors the
 state diagram from ``design.md`` against a shadow model maintained by
 the test, then checks per-step that:
 
-* :meth:`~wispy.lifecycle.LifecycleManager.admit` returns the
+* :meth:`~wspkit.lifecycle.LifecycleManager.admit` returns the
   decision predicted by the shadow model for every
   ``(state, method, is_notification)`` triple,
 * edge transitions
-  (:meth:`~wispy.lifecycle.LifecycleManager.on_initialize_success`,
-  :meth:`~wispy.lifecycle.LifecycleManager.on_shutdown_success`,
-  :meth:`~wispy.lifecycle.LifecycleManager.on_exit`) move the manager
+  (:meth:`~wspkit.lifecycle.LifecycleManager.on_initialize_success`,
+  :meth:`~wspkit.lifecycle.LifecycleManager.on_shutdown_success`,
+  :meth:`~wspkit.lifecycle.LifecycleManager.on_exit`) move the manager
   in lockstep with the shadow state,
-* the cached :class:`~wispy.endpoints.Capabilities` are preserved by
+* the cached :class:`~wspkit.endpoints.Capabilities` are preserved by
   identity across rejected re-``initialize`` requests, and
 * every admit decision from the terminal ``EXITED`` state is the
   defensive ``-32600`` rejection.
@@ -34,9 +34,9 @@ from hypothesis.stateful import (
     rule,
 )
 
-from wispy.endpoints import Capabilities
-from wispy.errors import JsonRpcErrorCode
-from wispy.lifecycle import (
+from wspkit.endpoints import Capabilities
+from wspkit.errors import JsonRpcErrorCode
+from wspkit.lifecycle import (
     Allow,
     Exit,
     LifecycleManager,

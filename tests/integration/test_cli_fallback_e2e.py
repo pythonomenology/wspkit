@@ -8,9 +8,9 @@ plumbing, the lifecycle FSM, the dispatcher, the
 ``index.json``, and a real ``python -m venv`` materialization for
 the create round-trip.
 
-Each test isolates state via ``WISPY_STATE_DIR`` pointed at a fresh
+Each test isolates state via ``WSPKIT_STATE_DIR`` pointed at a fresh
 ``tmp_path`` so persistence between tests is impossible. The CLI is
-invoked via ``python -c "from wispy.cli.main import main; ..."`` so
+invoked via ``python -c "from wspkit.cli.main import main; ..."`` so
 the tests do not depend on the ``wsp`` script entry being
 ``pip install``-ed into the active environment.
 """
@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-# Resolve ``src/`` so the spawned child can ``import wispy`` even when
+# Resolve ``src/`` so the spawned child can ``import wspkit`` even when
 # the package has not been installed editably into the active
 # environment. The Hatch test environment installs the package, but
 # adding ``src/`` to ``PYTHONPATH`` is a no-cost safety net for runs
@@ -36,12 +36,12 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 
 
-# Inline driver script. Equivalent to ``python -m wispy.cli.main``,
+# Inline driver script. Equivalent to ``python -m wspkit.cli.main``,
 # except that module currently has no ``if __name__ == "__main__"``
 # guard, so we replicate the script entry directly. ``sys.argv[1:]``
 # strips the ``-c`` synthetic name so the parser sees only the user
 # arguments we appended after.
-_CLI_DRIVER = "import sys; from wispy.cli.main import main; sys.exit(main(sys.argv[1:]))"
+_CLI_DRIVER = "import sys; from wspkit.cli.main import main; sys.exit(main(sys.argv[1:]))"
 
 
 # Major.minor of the running interpreter, used both for the
@@ -66,7 +66,7 @@ def _probe_venv_with_pip() -> tuple[bool, str]:
     if interpreter is None:
         return False, f"python{_THIS_PY} not on PATH"
 
-    tmpdir = Path(tempfile.mkdtemp(prefix="wispy-venv-probe-"))
+    tmpdir = Path(tempfile.mkdtemp(prefix="wspkit-venv-probe-"))
     try:
         proc = subprocess.run(
             [interpreter, "-m", "venv", str(tmpdir / "v")],
@@ -100,12 +100,12 @@ def _run_cli(
 ) -> subprocess.CompletedProcess[bytes]:
     """Spawn the WSP_CLI in fallback mode against ``state_dir``.
 
-    Sets ``WISPY_STATE_DIR`` so :class:`FallbackState` writes into a
+    Sets ``WSPKIT_STATE_DIR`` so :class:`FallbackState` writes into a
     test-isolated directory and prepends ``src/`` to ``PYTHONPATH``
-    so the child can import ``wispy`` without an editable install.
+    so the child can import ``wspkit`` without an editable install.
     """
     env = os.environ.copy()
-    env["WISPY_STATE_DIR"] = str(state_dir)
+    env["WSPKIT_STATE_DIR"] = str(state_dir)
     existing = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = str(_SRC_DIR) + (os.pathsep + existing if existing else "")
     return subprocess.run(

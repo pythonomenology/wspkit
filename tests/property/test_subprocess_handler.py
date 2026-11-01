@@ -1,11 +1,11 @@
 """Property and unit tests for the Subprocess_Handler factory.
 
-The Subprocess_Handler factory in :mod:`wispy.config` wraps an
-external command into a :data:`~wispy.registry.Handler` callable.
+The Subprocess_Handler factory in :mod:`wspkit.config` wraps an
+external command into a :data:`~wspkit.registry.Handler` callable.
 Each WSP method's request params are substituted into the command's
 argv via ``{key}`` tokens, the process is spawned with stdin closed
 immediately, and the result is constructed per the configured
-:class:`~wispy.config.ResultMode`:
+:class:`~wspkit.config.ResultMode`:
 
 * ``"json"``     -- parse stdout as JSON; return the parsed value.
 * ``"template"`` -- render a template table from the request params.
@@ -14,8 +14,8 @@ immediately, and the result is constructed per the configured
 
 Failures (spawn, timeout, non-zero exit for non-exec modes,
 non-JSON stdout for ``"json"``, malformed template) all surface as
-:class:`~wispy.errors.WspError` carrying
-:data:`~wispy.errors.WspErrorCode.EXECUTION_FAILED` (-31004) with a
+:class:`~wspkit.errors.WspError` carrying
+:data:`~wspkit.errors.WspErrorCode.EXECUTION_FAILED` (-31004) with a
 ``data.reason`` discriminator.
 
 Tests use a tiny Python helper script so they do not depend on any
@@ -36,26 +36,26 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-import wispy.config
-from wispy.config import (
+import wspkit.config
+from wspkit.config import (
     ResultMode,
     SubprocessHandlerSpec,
     _make_subprocess_handler,
 )
-from wispy.errors import WspError, WspErrorCode
+from wspkit.errors import WspError, WspErrorCode
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine
     from pathlib import Path
 
-    from wispy.registry import Handler
+    from wspkit.registry import Handler
 
 
 # Helper script source. Written to a tempfile per test session and
 # invoked via ``sys.executable`` so the test does not assume any
 # particular interpreter is on PATH.
 #
-# The script intentionally does *not* import anything from ``wispy``.
+# The script intentionally does *not* import anything from ``wspkit``.
 # It accepts a mode in ``argv[1]`` and varies its output / exit
 # behaviour accordingly. ``argv[2:]`` is the rest of the rendered
 # argv -- the helper echoes those positions when asked, which lets
@@ -235,7 +235,7 @@ def test_template_mode_renders_result_from_params(helper_script: Path) -> None:
 
     Mirrors the canonical Hatch ``environment/create`` adapter: the
     CLI itself does not emit the created environment's metadata, so
-    wispy synthesizes the WSP result from the request params plus
+    wspkit synthesizes the WSP result from the request params plus
     static fields.
     """
     spec = _spec(
@@ -398,7 +398,7 @@ def test_timeout_raises_wsp_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Timeout maps to WspError(EXECUTION_FAILED, reason='timeout')."""
-    monkeypatch.setattr(wispy.config, "_SUBPROCESS_TIMEOUT", 0.5)
+    monkeypatch.setattr(wspkit.config, "_SUBPROCESS_TIMEOUT", 0.5)
     spec = _spec(helper_script, "sleep", result_mode=ResultMode.JSON)
     handler = _make_subprocess_handler(spec)
     with pytest.raises(WspError) as excinfo:
@@ -428,15 +428,15 @@ def test_subprocess_not_alive_after_timeout(helper_script: Path) -> None:
     returning. We can't observe the PID directly, but a leaked child
     would either delay the follow-up call or starve the test runner.
     """
-    original_timeout = wispy.config._SUBPROCESS_TIMEOUT  # noqa: SLF001 - testing private timeout knob
-    wispy.config._SUBPROCESS_TIMEOUT = 0.5  # noqa: SLF001 - testing private timeout knob
+    original_timeout = wspkit.config._SUBPROCESS_TIMEOUT  # noqa: SLF001 - testing private timeout knob
+    wspkit.config._SUBPROCESS_TIMEOUT = 0.5  # noqa: SLF001 - testing private timeout knob
     try:
         sleep_spec = _spec(helper_script, "sleep", result_mode=ResultMode.JSON)
         sleep_handler = _make_subprocess_handler(sleep_spec)
         with pytest.raises(WspError):
             _run(sleep_handler, {})
     finally:
-        wispy.config._SUBPROCESS_TIMEOUT = original_timeout  # noqa: SLF001 - testing private timeout knob
+        wspkit.config._SUBPROCESS_TIMEOUT = original_timeout  # noqa: SLF001 - testing private timeout knob
 
     start = time.monotonic()
     success_spec = _spec(helper_script, "echo-json", result_mode=ResultMode.JSON)

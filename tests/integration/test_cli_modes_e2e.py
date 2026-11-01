@@ -2,7 +2,7 @@
 
 The ``wsp`` CLI exposes three execution modes:
 
-1. ``--config PATH``: launch ``python -m wispy --config PATH`` as a
+1. ``--config PATH``: launch ``python -m wspkit --config PATH`` as a
    child WSP_Server and route the call through the in-process client.
 2. ``--tool ARGV...``: launch ``ARGV`` as a child WSP_Server.
 3. Neither flag: run the built-in fallback in-process.
@@ -18,11 +18,11 @@ mutual-exclusion conflict path:
   loads a TOML Config_File that imports a tiny Python handler from a
   temp package on ``PYTHONPATH``, then dispatches
   ``environment/list`` through the full
-  CLI -> ``python -m wispy --config`` -> handler stack and asserts the
+  CLI -> ``python -m wspkit --config`` -> handler stack and asserts the
   returned JSON.
 * :func:`test_tool_mode_spawns_subprocess` -- ``--tool ARGV`` launches
   the supplied argv as a WSP_Server child and routes the call through
-  it. The argv we pass *is* ``python -m wispy --config <cfg>``, so the
+  it. The argv we pass *is* ``python -m wspkit --config <cfg>``, so the
   same Config_File-driven handler is exercised, this time reached via
   the ``--tool`` code path. Because ``argparse.REMAINDER`` (which
   ``--tool`` uses) consumes any following positionals -- including the
@@ -44,10 +44,10 @@ import sys
 import textwrap
 from pathlib import Path
 
-from wispy.cli.main import _run_with_client
+from wspkit.cli.main import _run_with_client
 
 # Repo root resolved from this file; child processes need ``src/`` on
-# their PYTHONPATH so they can ``import wispy`` regardless of how the
+# their PYTHONPATH so they can ``import wspkit`` regardless of how the
 # test runner was launched (Hatch's editable install plus an explicit
 # PYTHONPATH belt for the suspenders).
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -63,7 +63,7 @@ def _build_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     """Return an environment dict with ``src/`` prepended to PYTHONPATH.
 
     Any entries in ``extra`` take precedence over the inherited
-    environment (and over the wispy ``src/`` injection if they
+    environment (and over the wspkit ``src/`` injection if they
     explicitly set ``PYTHONPATH``).
     """
     env = os.environ.copy()
@@ -80,16 +80,16 @@ def _run_wsp_cli(
     env: dict[str, str] | None = None,
     timeout: float = 60.0,
 ) -> subprocess.CompletedProcess[bytes]:
-    """Run the wispy CLI as a fresh subprocess.
+    """Run the wspkit CLI as a fresh subprocess.
 
-    Uses ``python -c "from wispy.cli.main import main; ..."`` rather
+    Uses ``python -c "from wspkit.cli.main import main; ..."`` rather
     than the installed ``wsp`` script so the test does not depend on
     the project being ``pip install``-ed in the active interpreter.
     """
     cmd = [
         sys.executable,
         "-c",
-        ("import sys; from wispy.cli.main import main; sys.exit(main(sys.argv[1:]))"),
+        ("import sys; from wspkit.cli.main import main; sys.exit(main(sys.argv[1:]))"),
         *argv,
     ]
     return subprocess.run(
@@ -104,7 +104,7 @@ def _write_handler_package(root: Path, payload: list[dict[str, str]]) -> None:
     """Create ``handlers_pkg/envs.py`` returning ``payload`` verbatim.
 
     The handler is registered against ``environment/list`` via the
-    Config_File. The :mod:`wispy.__main__` bootstrap registers the
+    Config_File. The :mod:`wspkit.__main__` bootstrap registers the
     built-in ``initialize`` and ``shutdown`` handlers itself, so the
     user-written handler only needs to satisfy the ``environment/list``
     contract.
@@ -154,7 +154,7 @@ def _write_config(path: Path) -> None:
 def test_tool_and_config_together_exits_two(tmp_path: Path) -> None:
     """``--config`` together with ``--tool`` is a usage error (exit 2).
 
-    The conflict is enforced by :func:`wispy.cli.main.main` before any
+    The conflict is enforced by :func:`wspkit.cli.main.main` before any
     child process is spawned. ``--config`` is placed
     first so argparse parses both top-level flags before
     ``argparse.REMAINDER`` (which ``--tool`` uses) starts consuming the
@@ -182,12 +182,12 @@ def test_config_mode_with_python_handler(tmp_path: Path) -> None:
 
     This exercises the full Config_File loader and
     the ``--config`` mode wiring: the CLI spawns
-    ``python -m wispy --config <cfg>`` as a child server, that child
+    ``python -m wspkit --config <cfg>`` as a child server, that child
     imports ``handlers_pkg.envs.list_envs`` per the TOML mapping, the
     handler returns a fixed list, and the CLI prints it to stdout.
 
     The handler package is written to ``tmp_path`` and surfaced to
-    both the CLI parent and the spawned ``python -m wispy`` child via
+    both the CLI parent and the spawned ``python -m wspkit`` child via
     ``PYTHONPATH``, so the test does not pollute the project tree.
     """
     payload = [
@@ -202,9 +202,9 @@ def test_config_mode_with_python_handler(tmp_path: Path) -> None:
     _write_config(cfg)
 
     # Place ``tmp_path`` on PYTHONPATH so both the parent CLI and the
-    # spawned ``python -m wispy --config`` child can import
-    # ``handlers_pkg``. ``_build_env`` retains the wispy ``src/`` entry
-    # so ``wispy`` itself remains importable.
+    # spawned ``python -m wspkit --config`` child can import
+    # ``handlers_pkg``. ``_build_env`` retains the wspkit ``src/`` entry
+    # so ``wspkit`` itself remains importable.
     env = _build_env()
     env["PYTHONPATH"] = str(tmp_path) + os.pathsep + env["PYTHONPATH"]
 
@@ -221,7 +221,7 @@ def test_config_mode_with_python_handler(tmp_path: Path) -> None:
 def test_tool_mode_spawns_supplied_argv(tmp_path: Path) -> None:
     """``--tool ARGV`` launches the supplied argv as the WSP_Server.
 
-    The argv we hand to ``--tool`` is ``python -m wispy --config <cfg>``,
+    The argv we hand to ``--tool`` is ``python -m wspkit --config <cfg>``,
     i.e. the same WSP_Server as the ``--config`` mode test, just
     reached through the ``--tool`` code path. We assert the call
     round-trips through the dispatcher and produces the expected JSON
@@ -258,13 +258,13 @@ def test_tool_mode_spawns_supplied_argv(tmp_path: Path) -> None:
     # ``_run_with_client`` is the helper that ``main()`` invokes for
     # both ``--tool`` and ``--config`` modes; the only difference
     # between the two from this helper's perspective is the argv it
-    # receives. Passing the ``python -m wispy --config <cfg>`` argv
+    # receives. Passing the ``python -m wspkit --config <cfg>`` argv
     # mirrors what the ``--config`` branch does, so any divergence
     # between the two would surface here.
     child_argv = [
         sys.executable,
         "-m",
-        "wispy",
+        "wspkit",
         "--config",
         str(cfg),
     ]

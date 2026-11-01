@@ -11,7 +11,7 @@ This module models that property as a Hypothesis
 simulate a fresh CLI invocation:
 
 1. Each rule constructs a brand-new :class:`HandlerRegistry` via
-   :func:`~wispy.cli.fallback.make_fallback_registry`, pointing at a
+   :func:`~wspkit.cli.fallback.make_fallback_registry`, pointing at a
    shared temp state directory. The previous registry is discarded;
    only on-disk state survives between rules. This is exactly what
    the spec calls "process restart" semantics.
@@ -21,7 +21,7 @@ simulate a fresh CLI invocation:
    the persisted set of ``id`` values returned by ``environment/list``
    MUST always equal the multiset of ids in the shadow model.
 
-``subprocess.run``, ``wispy.cli.fallback._create_venv``, and ``shutil.which``
+``subprocess.run``, ``venv.EnvBuilder.create``, and ``shutil.which``
 are stubbed so each rule completes in milliseconds and never spawns a
 real interpreter. The on-disk state machinery (``index.json``, the
 file lock) is the system under test; the venv contents are not.
@@ -53,19 +53,19 @@ else:  # pragma: no cover - exercised only on 3.10 / 3.11
         return arg
 
 
-from wispy.cli.fallback import make_fallback_registry
-from wispy.dispatcher import dispatch
-from wispy.endpoints import PROTOCOL_VERSION, Capabilities
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import _UNSET, JsonRpcRequest
+from wspkit.cli.fallback import make_fallback_registry
+from wspkit.dispatcher import dispatch
+from wspkit.endpoints import PROTOCOL_VERSION, Capabilities
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import _UNSET, JsonRpcRequest
 
 if TYPE_CHECKING:
-    from wispy.registry import HandlerRegistry
+    from wspkit.registry import HandlerRegistry
 
 # --------------------------------------------------------------------- #
 # Fakes for the subprocess / venv / PATH-resolution boundary.
 #
-# The fallback handler shells out to ``wispy.cli.fallback._create_venv`` to
+# The fallback handler shells out to ``venv.EnvBuilder.create`` to
 # materialize a venv on disk and to ``shutil.which`` to confirm a
 # ``pythonX.Y`` binary is on PATH. Real execution would be slow and
 # would couple the test to the host's installed interpreter set; we
@@ -86,8 +86,8 @@ def _fake_subprocess_run(argv: Any, **_kwargs: Any) -> subprocess.CompletedProce
     return subprocess.CompletedProcess(args=argv, returncode=0, stdout=b"", stderr=b"")
 
 
-def _fake_create_venv(_interpreter: Any, target_dir: Any) -> None:
-    """Stand in for :func:`wispy.cli.fallback._create_venv`.
+def _fake_envbuilder_create(_self: Any, target_dir: Any) -> None:
+    """Stand in for :meth:`venv.EnvBuilder.create`.
 
     The real method writes a full venv tree under ``target_dir``. Our
     stub merely creates the directory so :func:`shutil.rmtree` (called
@@ -129,8 +129,8 @@ class FallbackPersistenceMachine(RuleBasedStateMachine):
     """Fallback Workflow_Tool persistence.
 
     Each rule is a fresh CLI invocation: a brand-new
-    :class:`~wispy.registry.HandlerRegistry` is built from
-    :func:`~wispy.cli.fallback.make_fallback_registry` against the
+    :class:`~wspkit.registry.HandlerRegistry` is built from
+    :func:`~wspkit.cli.fallback.make_fallback_registry` against the
     same temp state directory, exercising the persistence path and
     nothing else. The shadow model maintained by the test (``self.envs``,
     a ``dict[name, id]``) is checked against the live
@@ -140,10 +140,10 @@ class FallbackPersistenceMachine(RuleBasedStateMachine):
 
     def __init__(self) -> None:
         super().__init__()
-        # Per-test scratch directory. ``WISPY_STATE_DIR`` precedence is
+        # Per-test scratch directory. ``WSPKIT_STATE_DIR`` precedence is
         # exercised implicitly: ``make_fallback_registry`` is invoked
         # with an explicit ``state_root`` argument, which the
-        # :class:`~wispy.cli.state.FallbackState` constructor honors
+        # :class:`~wspkit.cli.state.FallbackState` constructor honors
         # over any environment variable.
         self.tmpdir = Path(tempfile.mkdtemp(prefix="wsp-persist-"))
         # Shadow model: maps the env's user-visible ``name`` to the
@@ -311,9 +311,9 @@ def _patch_subprocess_and_venv(monkeypatch: pytest.MonkeyPatch) -> None:
     per test method (not per Hypothesis example), they remain in
     effect across every rule the state machine runs.
     """
-    monkeypatch.setattr("wispy.cli.fallback.subprocess.run", _fake_subprocess_run)
-    monkeypatch.setattr("wispy.cli.fallback._create_venv", _fake_create_venv)
-    monkeypatch.setattr("wispy.cli.fallback.shutil.which", _fake_which)
+    monkeypatch.setattr("wspkit.cli.fallback.subprocess.run", _fake_subprocess_run)
+    monkeypatch.setattr("venv.EnvBuilder.create", _fake_envbuilder_create)
+    monkeypatch.setattr("wspkit.cli.fallback.shutil.which", _fake_which)
 
 
 # Hypothesis discovers the ``TestCase`` from the module-level binding;

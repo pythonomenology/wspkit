@@ -1,6 +1,6 @@
 """Unit tests for the WSP_CLI argument parser.
 
-Covers behaviours of :mod:`wispy.cli.main` that are easier to nail
+Covers behaviours of :mod:`wspkit.cli.main` that are easier to nail
 down with concrete examples than with property tests:
 
 * ``--tool`` and ``--config`` cannot be combined; argparse exits with
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from wispy.cli.main import (
+from wspkit.cli.main import (
     _read_stdin_json,
     build_parser,
     main,

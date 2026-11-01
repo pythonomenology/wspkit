@@ -1,7 +1,7 @@
 """Unit tests for the JSON-RPC 2.0 codec edge cases.
 
-Covers the boundary behaviours of :func:`wispy.protocol.parse_message`
-and :func:`wispy.protocol.serialize_response` that are easier to nail
+Covers the boundary behaviours of :func:`wspkit.protocol.parse_message`
+and :func:`wspkit.protocol.serialize_response` that are easier to nail
 down with concrete examples than with property tests:
 
 * Notification detection -- absent ``id`` member vs. explicit JSON null.
@@ -19,8 +19,8 @@ import json
 
 import pytest
 
-from wispy.errors import JsonRpcErrorCode
-from wispy.protocol import (
+from wspkit.errors import JsonRpcErrorCode
+from wspkit.protocol import (
     JsonRpcError,
     JsonRpcRequest,
     JsonRpcResponse,

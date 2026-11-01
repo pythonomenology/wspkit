@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "wispy"
-version = "0.1.0"
+name = "wspkit"
+version = "0.0.1"
 description = "The whitespace between your workflow tool and everything that talks to it. A Python library providing the JSON-RPC server for the Workflow Server Protocol (WSP)."
 readme = "README.md"
 license = "MIT"
@@ -38,17 +38,18 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = ""
+Homepage = "https://pythonomenology.github.io/wspkit/"
+Documentation = "https://pythonomenology.github.io/wspkit/"
 Sponsor = "https://github.com/sponsors/cjames23"
-History = ""
-Tracker = "https://github.com/cjames23/wispy/issues"
-Source = "https://github.com/cjames23/wispy/"
+History = "https://github.com/pythonomenology/wspkit/releases"
+Tracker = "https://github.com/pythonomenology/wspkit/issues"
+Source = "https://github.com/pythonomenology/wspkit/"
 
 [project.scripts]
-wsp = "wispy.cli.main:main"
+wsp = "wspkit.cli.main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wispy"]
+packages = ["src/wspkit"]
 
 [tool.hatch.envs.hatch-test]
 parallel = true

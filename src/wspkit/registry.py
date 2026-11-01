@@ -6,7 +6,7 @@ programmatic registration and Config_File
 registration funnel through :meth:`HandlerRegistry.register`.
 
 Attempting to bind a method that is already
-registered raises :class:`~wispy.errors.DuplicateRegistrationError`
+registered raises :class:`~wspkit.errors.DuplicateRegistrationError`
 without modifying any prior state.
 """
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from wispy.errors import DuplicateRegistrationError
+from wspkit.errors import DuplicateRegistrationError
 
 __all__ = ["Handler", "HandlerRegistry"]
 
@@ -43,7 +43,7 @@ class HandlerRegistry:
     def register(self, method: str, handler: Handler) -> None:
         """Bind ``handler`` to ``method``.
 
-        Raises :class:`~wispy.errors.DuplicateRegistrationError` if
+        Raises :class:`~wspkit.errors.DuplicateRegistrationError` if
         ``method`` is already bound; in that case the registry's state is
         left unchanged.
         """

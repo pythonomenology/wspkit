@@ -71,8 +71,7 @@ ENVIRONMENT_PYTHON_VERSION_MAX_LEN: Final[int] = 32
 INITIALIZE_CLIENT_NAME_MAX_LEN: Final[int] = 255
 INITIALIZE_CLIENT_PROTOCOL_VERSION_MAX_LEN: Final[int] = 64
 
-# MAJOR.MINOR(.PATCH)? where each component is a non-negative integer
-# with no leading zeros (except a single ``0``).
+
 _PYTHON_VERSION_RE: Final = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:\.(0|[1-9][0-9]*))?$")
 
 

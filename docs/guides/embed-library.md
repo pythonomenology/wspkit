@@ -1,7 +1,7 @@
-# Embed wispy in a workflow tool
+# Embed wspkit in a workflow tool
 
 If your workflow tool is written in Python, the most direct way to expose a
-WSP server is to take a runtime dependency on `wispy`, register Python
+WSP server is to take a runtime dependency on `wspkit`, register Python
 callables for the methods you support, and call `run_stdio`. This guide
 walks through it end to end.
 
@@ -14,7 +14,7 @@ A minimal "hello world" workflow tool that supports `initialize`,
 ## Add the dependency
 
 ```sh
-pip install wispy
+pip install wspkit
 ```
 
 Or, if you use a `pyproject.toml`:
@@ -22,7 +22,7 @@ Or, if you use a `pyproject.toml`:
 ```toml
 [project]
 dependencies = [
-  "wispy",
+  "wspkit",
 ]
 ```
 
@@ -33,14 +33,14 @@ dependencies = [
 import asyncio
 import sys
 
-from wispy import Capabilities, HandlerRegistry, run_stdio
+from wspkit import Capabilities, HandlerRegistry, run_stdio
 
 
 registry = HandlerRegistry()
 
 
 def initialize(_params: object) -> dict:
-    """Return capabilities. wispy preserves the Capabilities tuple/list shape."""
+    """Return capabilities. wspkit preserves the Capabilities tuple/list shape."""
     return Capabilities(
         methods=tuple(registry.methods()),
         protocol_version="0.1.0",
@@ -73,14 +73,12 @@ if __name__ == "__main__":
 A few things worth noting:
 
 - Handlers receive the request `params` value as a single argument and
-  return a JSON-serializable result. The wire data models
-  (`Capabilities`, `Environment`, `ExecuteResult`, `DeleteAck`) may be
-  returned directly; they are encoded through their `to_jsonable()`. They can be either `def` or
+  return a JSON-serializable result. They can be either `def` or
   `async def`; sync handlers run on the default executor so they don't
   block the event loop.
 - `registry.methods()` is what you should advertise from `initialize`.
-  Return `wispy.Capabilities(...)` or its `to_jsonable()` dict; either
-  way the lifecycle FSM caches it as `Capabilities`.
+  `wspkit.Capabilities.to_jsonable()` produces a plain dict that the
+  dispatcher hands directly to `json.dumps`.
 - A second `initialize` will be rejected by the lifecycle FSM with
   `-32600`; the cached capabilities from the first successful call are
   preserved verbatim.
@@ -107,7 +105,7 @@ Use `WspError` for application-level failures the client should be able to
 react to:
 
 ```python
-from wispy import WspError, WspErrorCode
+from wspkit import WspError, WspErrorCode
 
 
 def get_env(params):
@@ -153,7 +151,7 @@ asyncio.run(run_stdio(registry, drain_timeout=15.0))
 You can also inject a custom transport (typically only useful in tests):
 
 ```python
-from wispy import StdioTransport
+from wspkit import StdioTransport
 
 transport = StdioTransport(stdin=..., stdout=..., stderr=...)
 asyncio.run(run_stdio(registry, transport=transport))
@@ -161,7 +159,7 @@ asyncio.run(run_stdio(registry, transport=transport))
 
 ## Don't want a runtime dependency?
 
-If you'd rather not import `wispy`, see
+If you'd rather not import `wspkit`, see
 [Ship a Config_File](config-file.md). The Config_File flow lets you map WSP
 methods to dotted import paths *or* to external commands, so your tool
-never needs to know `wispy` exists.
+never needs to know `wspkit` exists.

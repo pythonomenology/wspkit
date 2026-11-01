@@ -8,7 +8,7 @@ a structured error model.
 ## Message shape
 
 Every WSP message is a single JSON-RPC 2.0 request, response, notification,
-or batch. `wispy` accepts every shape the spec defines.
+or batch. `wspkit` accepts every shape the spec defines.
 
 A request:
 
@@ -48,7 +48,7 @@ A notification (no `id`, no response is emitted):
 {"jsonrpc": "2.0", "method": "exit"}
 ```
 
-`wispy` preserves the JSON type of `id` (string, integer, or null) verbatim
+`wspkit` preserves the JSON type of `id` (string, integer, or null) verbatim
 on the response. Floats, booleans, and other types are rejected as invalid
 requests; the response carries a `null` id.
 
@@ -124,6 +124,6 @@ short version is:
 - **Not a transport abstraction.** Today it speaks JSON-RPC 2.0 over stdio.
   The codec and the dispatcher are decoupled from the transport; future
   iterations may add additional transports without changing the wire shape.
-- **Not opinionated about Python.** Although `wispy` is written in Python,
+- **Not opinionated about Python.** Although `wspkit` is written in Python,
   WSP servers can be written in any language — the Config_File flow lets you
   bind methods to arbitrary subprocess commands.

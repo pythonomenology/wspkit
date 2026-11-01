@@ -1,7 +1,7 @@
 """Property test for environment endpoints model.
 
 The environment endpoints exposed by
-:func:`wispy.cli.fallback.make_fallback_registry` are treated as a
+:func:`wspkit.cli.fallback.make_fallback_registry` are treated as a
 stateful system whose abstract state is a map ``id -> Environment``.
 A Hypothesis :class:`~hypothesis.stateful.RuleBasedStateMachine`
 drives the system through arbitrary sequences of ``create``, ``get``,
@@ -26,10 +26,10 @@ machine asserts that:
 * a successful ``environment/execute`` result has an ``int`` exit code
   and ``str`` stdout/stderr.
 
-The cost of a real venv creation and of every
+The cost of a real ``venv.EnvBuilder.create`` and of every
 ``subprocess.run`` invocation would dominate this test by orders of
-magnitude. Both are reachable at module scope in
-:mod:`wispy.cli.fallback` precisely so the test can replace them via
+magnitude. Both are imported at module scope in
+:mod:`wspkit.cli.fallback` precisely so the test can replace them via
 :mod:`unittest.mock`; see the module docstring there for the contract.
 """
 
@@ -40,6 +40,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import venv
 from pathlib import Path
 from typing import Any
 from unittest import mock
@@ -59,12 +60,12 @@ from hypothesis import HealthCheck, assume, settings
 from hypothesis import strategies as st
 from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
 
-from wispy.cli.fallback import make_fallback_registry
-from wispy.dispatcher import dispatch
-from wispy.endpoints import Capabilities
-from wispy.errors import JsonRpcErrorCode, WspErrorCode
-from wispy.lifecycle import LifecycleManager
-from wispy.protocol import JsonRpcError, JsonRpcRequest, JsonRpcResponse
+from wspkit.cli.fallback import make_fallback_registry
+from wspkit.dispatcher import dispatch
+from wspkit.endpoints import Capabilities
+from wspkit.errors import JsonRpcErrorCode, WspErrorCode
+from wspkit.lifecycle import LifecycleManager
+from wspkit.protocol import JsonRpcError, JsonRpcRequest, JsonRpcResponse
 
 # Versions for which the fake :func:`shutil.which` reports an
 # interpreter is on PATH. Anything else fails the
@@ -94,15 +95,15 @@ def _fake_subprocess_run(argv: Any, **_kwargs: Any) -> subprocess.CompletedProce
     Returns a successful :class:`subprocess.CompletedProcess` whose
     stdout is the JSON literal ``[]`` (so :func:`_list_installed_packages`
     decodes it as an empty package list) and whose stderr is empty.
-    Both call sites in :mod:`wispy.cli.fallback` only require that
+    Both call sites in :mod:`wspkit.cli.fallback` only require that
     ``returncode`` is an :class:`int` and that the captured byte
     streams decode to UTF-8.
     """
     return subprocess.CompletedProcess(args=argv, returncode=0, stdout=b"[]", stderr=b"")
 
 
-def _fake_create_venv(_interpreter: Any, _target_dir: Any) -> None:
-    """No-op stub for :func:`wispy.cli.fallback._create_venv`.
+def _fake_envbuilder_create(_self: Any, _target_dir: Any) -> None:
+    """No-op stub for :meth:`venv.EnvBuilder.create`.
 
     The fallback handler does not stat the venv after creation
     (``environment/get`` reconstructs ``interpreter_path`` purely from
@@ -168,8 +169,8 @@ class EnvironmentModelMachine(RuleBasedStateMachine):
     """Environment endpoints behave as a model.
 
     See module docstring for the property statement. The machine wires
-    a freshly-built fallback :class:`~wispy.registry.HandlerRegistry`
-    to a :class:`~wispy.lifecycle.LifecycleManager` already advanced
+    a freshly-built fallback :class:`~wspkit.registry.HandlerRegistry`
+    to a :class:`~wspkit.lifecycle.LifecycleManager` already advanced
     past the ``-32002`` initialize gate, so non-``initialize`` rules
     are admitted directly.
     """
@@ -181,22 +182,23 @@ class EnvironmentModelMachine(RuleBasedStateMachine):
         # rule-machine lifetime. ``teardown`` stops them.
         self._patches: list[Any] = [
             mock.patch(
-                "wispy.cli.fallback.subprocess.run",
+                "wspkit.cli.fallback.subprocess.run",
                 side_effect=_fake_subprocess_run,
             ),
-            mock.patch(
-                "wispy.cli.fallback._create_venv",
-                _fake_create_venv,
+            mock.patch.object(
+                venv.EnvBuilder,
+                "create",
+                _fake_envbuilder_create,
             ),
             mock.patch(
-                "wispy.cli.fallback.shutil.which",
+                "wspkit.cli.fallback.shutil.which",
                 side_effect=_fake_which,
             ),
         ]
         for patcher in self._patches:
             patcher.start()
 
-        self._tmp = Path(tempfile.mkdtemp(prefix="wispy-fallback-test-"))
+        self._tmp = Path(tempfile.mkdtemp(prefix="wspkit-fallback-test-"))
         self.registry = make_fallback_registry(self._tmp)
         self.lifecycle = LifecycleManager()
         # Advance the lifecycle past the -32002 gate so the dispatcher

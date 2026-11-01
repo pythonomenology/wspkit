@@ -1,9 +1,9 @@
 # Ship a Config_File
 
-If you'd rather not depend on `wispy` at runtime — for example because
+If you'd rather not depend on `wspkit` at runtime — for example because
 you want to keep your library footprint small, or because your tool is
 implemented in another language — you can describe a WSP server with a
-TOML or JSON config file and let `wispy` itself launch it.
+TOML or JSON config file and let `wspkit` itself launch it.
 
 The Config_File flow is designed to **adapt an existing CLI** to WSP
 without writing a single line of Python. You declare which subcommand
@@ -37,7 +37,7 @@ other extension is rejected at startup.
 ### `command` — adapt an existing CLI
 
 This is the primary path the Config_File flow exists for. You declare
-the argv your tool wants to run; wispy substitutes the WSP request
+the argv your tool wants to run; wspkit substitutes the WSP request
 params into it, spawns the process with stdin closed (your CLI does
 not need to read JSON on stdin), and constructs the WSP result based
 on your declared `result` mode.
@@ -85,7 +85,7 @@ mapped to `WspError(EXECUTION_FAILED, data={"reason": "missing-template-key"})`
 
 #### Result modes
 
-The `result` field declares how wispy builds the WSP method's result
+The `result` field declares how wspkit builds the WSP method's result
 from the subprocess's outcome:
 
 | Mode         | Behaviour                                                                                              | Best for                                                              |
@@ -109,7 +109,7 @@ need to specify `result` explicitly:
 | `environment/execute`   | `"exec"`      |
 
 Methods whose default is `"template"` still require an explicit
-`template` table — wispy can't guess your CLI's data model.
+`template` table — wspkit can't guess your CLI's data model.
 
 #### Templates
 
@@ -169,12 +169,12 @@ Use this when:
 - You need to call multiple subcommands and merge their output.
 
 The Python handler can shell out to your CLI using `subprocess`,
-`asyncio.create_subprocess_exec`, or anything else. wispy doesn't care
+`asyncio.create_subprocess_exec`, or anything else. wspkit doesn't care
 how it produces the result.
 
 ## Validation
 
-At startup, wispy validates:
+At startup, wspkit validates:
 
 - The file extension and parse.
 - That the document is an object and `handlers` is an object.
@@ -195,7 +195,7 @@ Any failure is reported on stderr and the process exits with status
 Once you have a config file, any WSP client can launch your tool with:
 
 ```sh
-python -m wispy --config my-tool.toml
+python -m wspkit --config my-tool.toml
 ```
 
 Or via the bundled CLI:
@@ -209,7 +209,7 @@ wsp --config my-tool.toml environment/create --name scratch --python-version 3.1
 
 Two things WSP defines but the Config_File doesn't carry:
 
-- **`initialize` and `shutdown`.** wispy registers built-in handlers
+- **`initialize` and `shutdown`.** wspkit registers built-in handlers
   for these automatically. You don't write them, and the Config_File
   rejects attempts to override them.
 - **The `exit` notification.** It's a transport-level concern, not a

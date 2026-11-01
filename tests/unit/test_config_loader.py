@@ -1,9 +1,9 @@
-"""Unit tests for :func:`wispy.config.load_config` rejection paths.
+"""Unit tests for :func:`wspkit.config.load_config` rejection paths.
 
 Each rejection reason from the Config_File startup-error
 table gets one focused test that writes a temporary file with the
 minimum content needed to exercise the failure path, then asserts that
-:func:`load_config` raises :class:`~wispy.config.ConfigError` with a
+:func:`load_config` raises :class:`~wspkit.config.ConfigError` with a
 message that names the offending detail (file extension, method name,
 ``PATH``, etc.).
 
@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from wispy.config import (
+from wspkit.config import (
     ConfigEntry,
     ConfigError,
     PythonHandlerSpec,
@@ -109,7 +109,7 @@ def test_unresolvable_import_path_rejected(tmp_path: Path) -> None:
     """A dotted path whose module does not exist is rejected."""
     p = _write(
         tmp_path / "cfg.toml",
-        '[handlers]\ninitialize = { import = "wispy.nonexistent.module.thing" }\n',
+        '[handlers]\ninitialize = { import = "wspkit.nonexistent.module.thing" }\n',
     )
     with pytest.raises(ConfigError):
         load_config(p)

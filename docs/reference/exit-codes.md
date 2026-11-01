@@ -24,12 +24,12 @@ the JSON.
 ## Programmatic access
 
 ```python
-from wispy.cli.main import ExitCode
+from wspkit.cli.main import ExitCode
 
 ExitCode.SUCCESS                # 0
 ExitCode.GENERIC_ERROR          # 1
 ExitCode.USAGE_OR_UNSUPPORTED   # 2
 ```
 
-The same constants are also available from `wispy.cli._exit_codes` if
+The same constants are also available from `wspkit.cli._exit_codes` if
 you want to import them without pulling in the rest of the CLI module.

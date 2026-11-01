@@ -1,7 +1,7 @@
 """Property tests for the WSP error code enum.
 
 Every member of
-:class:`wispy.errors.WspErrorCode` MUST have a numeric value inside the
+:class:`wspkit.errors.WspErrorCode` MUST have a numeric value inside the
 WSP-reserved range ``[-31999, -31000]``.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.errors import WspErrorCode
+from wspkit.errors import WspErrorCode
 
 # Inclusive bounds of the WSP-reserved JSON-RPC error code range.
 WSP_CODE_MIN = -31999

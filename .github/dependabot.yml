@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Keep the SHA-pinned GitHub Actions current (and re-pin to new SHAs).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Keep Python dependencies current.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly

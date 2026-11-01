@@ -8,7 +8,7 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.cli.main import merge_params
+from wspkit.cli.main import merge_params
 
 _keys = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=8)
 _values = st.one_of(

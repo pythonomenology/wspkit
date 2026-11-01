@@ -1,6 +1,6 @@
-# wispy
+# wspkit
 
-`wispy` is a Python library and command-line client for the **Workflow Server
+`wspkit` is a Python library and command-line client for the **Workflow Server
 Protocol (WSP)** — a small JSON-RPC 2.0 protocol that lets workflow tools
 (environment managers, task runners, test runners) expose their capabilities to
 consuming tools through a uniform interface.
@@ -9,7 +9,7 @@ WSP is to workflow tools roughly what the Language Server Protocol is to
 editors: a stable, machine-readable surface that decouples the tool from the
 client.
 
-## Why use wispy
+## Why use wspkit
 
 - **Two integration paths.** Take a runtime dependency on the library and
   register Python callables, or stay completely decoupled by writing a TOML or
@@ -32,7 +32,7 @@ client.
 - New to WSP? Begin with [Getting started](getting-started.md), then read the
   [Protocol overview](concepts/protocol.md) for the data model.
 - Already have a workflow tool? Jump to
-  [Embed wispy in a workflow tool](guides/embed-library.md) to wire it up in
+  [Embed wspkit in a workflow tool](guides/embed-library.md) to wire it up in
   a few lines, or to [Ship a Config_File](guides/config-file.md) if you'd
   prefer no runtime dependency.
 - Have an existing CLI you'd like to expose over WSP? Read
@@ -41,7 +41,7 @@ client.
 
 ## Project status
 
-`wispy` is a young library. The first iteration ships:
+`wspkit` is a young library. The first iteration ships:
 
 - The `WSP_Server` runtime over stdio with `Content-Length` framing.
 - Programmatic and Config_File handler registration.

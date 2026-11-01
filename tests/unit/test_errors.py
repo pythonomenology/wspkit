@@ -1,4 +1,4 @@
-"""Unit tests for :class:`wispy.errors.WspError` construction invariants.
+"""Unit tests for :class:`wspkit.errors.WspError` construction invariants.
 
 These tests cover the construction-time validation rules required by the
 WSP error model so that any :class:`WspError` instance is guaranteed to
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from wispy.errors import WspError, WspErrorCode
+from wspkit.errors import WspError, WspErrorCode
 
 # A code known to be inside the WSP-reserved range (-31999..-31000) and
 # therefore safe to use in tests that only care about other invariants.

@@ -8,9 +8,9 @@ from contextlib import redirect_stderr
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.cli.client import ClientResult, _result_from_error_response
-from wispy.cli.main import ExitCode
-from wispy.errors import JsonRpcErrorCode
+from wspkit.cli.client import ClientResult, _result_from_error_response
+from wspkit.cli.main import ExitCode
+from wspkit.errors import JsonRpcErrorCode
 
 # Any int that is NOT -32601 represents the "other JSON-RPC error" arm
 # of the exit-code property. We bound the range loosely; the mapping

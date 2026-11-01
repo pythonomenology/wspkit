@@ -19,9 +19,9 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from wispy.endpoints import PROTOCOL_VERSION, WSP_METHODS, Capabilities
-from wispy.lifecycle import LifecycleManager, ServerState
-from wispy.registry import HandlerRegistry
+from wspkit.endpoints import PROTOCOL_VERSION, WSP_METHODS, Capabilities
+from wspkit.lifecycle import LifecycleManager, ServerState
+from wspkit.registry import HandlerRegistry
 
 # Semver regex used to validate the advertised protocol version. The
 # character class

@@ -1,6 +1,6 @@
 # Transport & framing
 
-`wispy` ships a single transport: stdio with LSP-style `Content-Length`
+`wspkit` ships a single transport: stdio with LSP-style `Content-Length`
 framing. The transport layer is small and decoupled from everything above
 it, so the dispatcher and lifecycle FSM are reusable if a different
 transport is added later.
@@ -27,7 +27,7 @@ language clients) work without modification.
 
 ## Streaming and chunking
 
-`wispy.framing.FrameDecoder` is a streaming decoder. You can feed it any
+`wspkit.framing.FrameDecoder` is a streaming decoder. You can feed it any
 chunk size — a byte at a time, a frame at a time, or a thousand frames at
 once — and it will yield complete payloads as they become available. The
 property test `test_framing.py` exercises arbitrary chunkings via Hypothesis
@@ -66,7 +66,7 @@ other tools, or pipe it through a debugger that injects markers on stderr.
 Two reasons:
 
 1. **Compatibility with LSP tooling.** Clients that speak LSP can be
-   pointed at a `wispy` server with no transport changes.
+   pointed at a `wspkit` server with no transport changes.
 2. **Robustness.** A single header tells the decoder exactly how many bytes
    to read, so corrupted payloads can't desynchronise the stream the way
    delimiter-based framings can.

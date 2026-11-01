@@ -1,6 +1,6 @@
 # Use the wsp CLI
 
-`wsp` is the command-line client that ships with `wispy`. It performs the
+`wsp` is the command-line client that ships with `wspkit`. It performs the
 per-invocation lifecycle for you (`initialize` → method → `shutdown` →
 `exit`), prints the JSON result of each call to stdout, and chooses an
 exit code based on the response.
@@ -9,18 +9,11 @@ exit code based on the response.
 
 `wsp` runs in one of three modes, picked by the top-level flags:
 
-- **`--tool ARGV... METHOD`** — launches the supplied argv as the WSP
-  server and routes the call through it, e.g.
-  `wsp --tool my-tool wsp-serve environment/list`. The server argv ends
-  at the first argument that names a method subcommand. Use this when
-  you have a workflow tool that knows how to run as a WSP server
-  (because it embedded `wispy` directly, or because it implements WSP
-  itself).
-
-  If the server fails before answering (for example a `--config` child
-  rejecting its Config_File), its stderr is echoed after `wsp`'s own
-  error message.
-- **`--config PATH`** — launches `python -m wispy --config PATH` as the
+- **`--tool ARGV...`** — launches the supplied argv as the WSP server and
+  routes the call through it. Use this when you have a workflow tool that
+  knows how to run as a WSP server (because it embedded `wspkit` directly,
+  or because it implements WSP itself).
+- **`--config PATH`** — launches `python -m wspkit --config PATH` as the
   WSP server. Use this with the [Config_File flow](config-file.md).
 - **No flag** — runs the built-in fallback workflow tool in-process. Use
   this when you just want to manage `venv`-backed environments without
@@ -83,12 +76,10 @@ See [Exit codes](../reference/exit-codes.md) for the rationale.
 `wsp` enforces two 30-second budgets per invocation:
 
 - **Launch:** the child server has 30 seconds to start.
-- **Per-call:** each request has 30 seconds to receive a response. In
-  `--config` mode, when the Config_File gives the requested method a
-  longer `timeout`, `wsp` waits that long plus five seconds instead.
+- **Per-call:** each request has 30 seconds to receive a response.
 
 Exceeding either prints a one-line error to stderr and exits with status
-`1`. Responses are not size-limited.
+`1`.
 
 ## Termination
 
@@ -122,7 +113,7 @@ wsp environment/create --name scratch --python-version 3.12
   "id": "env-1f0eafbb96d3",
   "name": "scratch",
   "python_version": "3.12",
-  "interpreter_path": "/.../wispy/fallback/envs/env-1f0eafbb96d3/bin/python",
+  "interpreter_path": "/.../wspkit/fallback/envs/env-1f0eafbb96d3/bin/python",
   "installed_packages": [],
   "extra": {}
 }
@@ -136,14 +127,8 @@ wsp --config my-tool.toml environment/list
 
 ### Executing a command in an environment
 
-`--argv` takes every remaining argument as the command, so it must be
-the last flag. `--env KEY=VALUE` may be repeated:
-
-```sh
-wsp environment/execute --id env-1f0eafbb96d3 --env PYTHONWARNINGS=error --argv python -V
-```
-
-The same request as JSON:
+The `--argv` field is an array of strings, so use `--params-json -` to
+pass it:
 
 ```sh
 echo '{"id": "env-1f0eafbb96d3", "argv": ["python", "-V"]}' \
@@ -158,9 +143,9 @@ echo '{"id": "env-1f0eafbb96d3", "argv": ["python", "-V"]}' \
 
 The fallback workflow tool persists its environment registry under:
 
-- `${WISPY_STATE_DIR}` if you set it.
-- `${XDG_STATE_HOME:-~/.local/state}/wispy/fallback/` on POSIX otherwise.
-- `%LOCALAPPDATA%\wispy\fallback\` on Windows otherwise.
+- `${WSPKIT_STATE_DIR}` if you set it.
+- `${XDG_STATE_HOME:-~/.local/state}/wspkit/fallback/` on POSIX otherwise.
+- `%LOCALAPPDATA%\wspkit\fallback\` on Windows otherwise.
 
-Pointing `WISPY_STATE_DIR` at a temp directory is the recommended way to
+Pointing `WSPKIT_STATE_DIR` at a temp directory is the recommended way to
 isolate experiments.

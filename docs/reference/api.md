@@ -1,10 +1,10 @@
 # Public API
 
-`wispy` re-exports everything you need for the programmatic flow from the
+`wspkit` re-exports everything you need for the programmatic flow from the
 top-level package.
 
 ```python
-from wispy import (
+from wspkit import (
     # Lifecycle / capabilities
     Capabilities,
     PROTOCOL_VERSION,

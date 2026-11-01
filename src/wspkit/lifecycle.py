@@ -25,7 +25,7 @@ one of three :data:`AdmitDecision` variants:
 
 * :class:`Allow` -- the dispatcher should look up the handler and run it.
 * :class:`RejectWith` -- the dispatcher should emit the carried
-  :class:`~wispy.protocol.JsonRpcError` (and skip handler dispatch).
+  :class:`~wspkit.protocol.JsonRpcError` (and skip handler dispatch).
 * :class:`Exit` -- the runtime should drain pending writes and exit the
   process with the carried status code.
 
@@ -37,15 +37,15 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Final
 
-from wispy.errors import JsonRpcErrorCode
-from wispy.protocol import JsonRpcError
+from wspkit.errors import JsonRpcErrorCode
+from wspkit.protocol import JsonRpcError
 
 if TYPE_CHECKING:
-    # ``Capabilities`` lives in ``wispy.endpoints`` which currently has a
+    # ``Capabilities`` lives in ``wspkit.endpoints`` which currently has a
     # circular relationship with the lifecycle (the dispatcher wires
     # them together). Importing only under ``TYPE_CHECKING`` keeps the
     # runtime import graph acyclic while preserving precise typing.
-    from wispy.endpoints import Capabilities
+    from wspkit.endpoints import Capabilities
 
 
 __all__ = [

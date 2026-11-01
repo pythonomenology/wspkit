@@ -1,6 +1,6 @@
 # Contributing
 
-`wispy` is an open-source Python project. Contributions are welcome — bug
+`wspkit` is an open-source Python project. Contributions are welcome — bug
 reports, documentation fixes, new features, and performance improvements
 are all in scope.
 
@@ -11,8 +11,8 @@ Install Hatch (e.g. `pipx install hatch`), clone the repo, and you're
 ready:
 
 ```sh
-git clone https://github.com/cjames23/wispy.git
-cd wispy
+git clone https://github.com/pythonomenology/wspkit.git
+cd wspkit
 ```
 
 Hatch creates and caches isolated environments on demand. There is no
@@ -37,7 +37,7 @@ hatch check types
 The test environment is intentionally separate from the project's runtime
 dependencies. `pytest`, `hypothesis`, and friends live only in
 `[tool.hatch.envs.hatch-test]`, so they cannot leak into a downstream
-consumer that installs `wispy`.
+consumer that installs `wspkit`.
 
 ## Documentation
 
@@ -50,14 +50,14 @@ hatch run docs:build
 ```
 
 The site is built with [Zensical](https://zensical.org/) — see
-[`zensical.toml`](https://github.com/cjames23/wispy/blob/main/zensical.toml)
-for the configuration and [`docs/`](https://github.com/cjames23/wispy/tree/main/docs)
+[`zensical.toml`](https://github.com/pythonomenology/wspkit/blob/main/zensical.toml)
+for the configuration and [`docs/`](https://github.com/pythonomenology/wspkit/tree/main/docs)
 for the source.
 
 ## Code style
 
-- Absolute imports only. Anything inside `wispy.*` imports its
-  dependencies via `from wispy.X import Y`, never `from .X import Y`.
+- Absolute imports only. Anything inside `wspkit.*` imports its
+  dependencies via `from wspkit.X import Y`, never `from .X import Y`.
 - The project uses Hatch's default ruff rule set (no project-level
   overrides). When you add new code, run `hatch check code` to make
   sure it passes.
@@ -79,7 +79,7 @@ for the source.
 
 ## Reporting issues
 
-File issues at <https://github.com/cjames23/wispy/issues>. Useful
+File issues at <https://github.com/pythonomenology/wspkit/issues>. Useful
 details:
 
 - The Python version and operating system.

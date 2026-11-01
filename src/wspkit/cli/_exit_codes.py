@@ -1,8 +1,8 @@
 """Canonical exit-code constants for the WSP_CLI.
 
-This module exists so that :mod:`wispy.cli.client` and other CLI
+This module exists so that :mod:`wspkit.cli.client` and other CLI
 internals can reference :class:`ExitCode` without having to import
-:mod:`wispy.cli.main`. That avoids a circular import that would
+:mod:`wspkit.cli.main`. That avoids a circular import that would
 otherwise force the dependents of :class:`ExitCode` to be loaded
 lazily inside functions.
 """

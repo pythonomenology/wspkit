@@ -27,7 +27,7 @@ form callers pass in.
 
 This module implements the persistence primitives only; the
 actual ``environment/*`` handlers live in
-:mod:`wispy.cli.fallback` (added in a later task).
+:mod:`wspkit.cli.fallback` (added in a later task).
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ if os.name == "nt":  # pragma: no cover - platform-specific
 else:
     import fcntl
 
-from wispy.endpoints import Environment
+from wspkit.endpoints import Environment
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -66,27 +66,27 @@ def _default_state_dir() -> Path:
 
     Resolution order:
 
-    1. ``$WISPY_STATE_DIR`` if set (test override and explicit user
+    1. ``$WSPKIT_STATE_DIR`` if set (test override and explicit user
        opt-in).
-    2. On POSIX, ``$XDG_STATE_HOME/wispy/fallback`` if set, else
-       ``~/.local/state/wispy/fallback``.
-    3. On Windows, ``%LOCALAPPDATA%\\wispy\\fallback``; if
+    2. On POSIX, ``$XDG_STATE_HOME/wspkit/fallback`` if set, else
+       ``~/.local/state/wspkit/fallback``.
+    3. On Windows, ``%LOCALAPPDATA%\\wspkit\\fallback``; if
        ``LOCALAPPDATA`` is somehow unset (very unusual outside of
        stripped-down CI environments), fall back to
-       ``~/AppData/Local/wispy/fallback`` so we still produce a
+       ``~/AppData/Local/wspkit/fallback`` so we still produce a
        usable path rather than crashing.
     """
-    override = os.environ.get("WISPY_STATE_DIR")
+    override = os.environ.get("WSPKIT_STATE_DIR")
     if override:
         return Path(override)
     if os.name == "nt":
         local_app_data = os.environ.get("LOCALAPPDATA")
         if local_app_data:
-            return Path(local_app_data) / "wispy" / "fallback"
-        return Path.home() / "AppData" / "Local" / "wispy" / "fallback"
+            return Path(local_app_data) / "wspkit" / "fallback"
+        return Path.home() / "AppData" / "Local" / "wspkit" / "fallback"
     xdg_state = os.environ.get("XDG_STATE_HOME")
     base = Path(xdg_state) if xdg_state else (Path.home() / ".local" / "state")
-    return base / "wispy" / "fallback"
+    return base / "wspkit" / "fallback"
 
 
 def _retry_until_locked(try_lock: Callable[[], None], *, poll: float = _WINDOWS_LOCK_POLL_S) -> None:

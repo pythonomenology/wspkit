@@ -1,6 +1,6 @@
 # Testing
 
-`wispy` is built around the idea that the protocol implementation should
+`wspkit` is built around the idea that the protocol implementation should
 be verified against universal properties before any I/O is wired in. The
 test suite is organised in three tiers, each with a different scope and
 guarantee.

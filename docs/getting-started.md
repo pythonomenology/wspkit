@@ -2,13 +2,13 @@
 
 ## Install
 
-`wispy` is published on PyPI and supports Python 3.10 and newer.
+`wspkit` is published on PyPI and supports Python 3.10 and newer.
 
 ```sh
-pip install wispy
+pip install wspkit
 ```
 
-That installs both the `wispy` Python library and the `wsp` command-line
+That installs both the `wspkit` Python library and the `wsp` command-line
 client.
 
 If you're working from a checkout, an editable install works the same way:
@@ -47,23 +47,23 @@ The CLI prints the JSON result of each call to stdout on success, the
 JSON-RPC error object to stderr on failure, and chooses an exit code based on
 the response — see [Exit codes](reference/exit-codes.md).
 
-State for the fallback tool lives under `${WISPY_STATE_DIR}` if you set it,
+State for the fallback tool lives under `${WSPKIT_STATE_DIR}` if you set it,
 otherwise under the standard XDG / `LOCALAPPDATA` location. Pointing
-`WISPY_STATE_DIR` at a temp directory is the recommended way to isolate
+`WSPKIT_STATE_DIR` at a temp directory is the recommended way to isolate
 experiments.
 
 ## Drive a tool you wrote
 
-Two paths, depending on whether you want a runtime dependency on `wispy`:
+Two paths, depending on whether you want a runtime dependency on `wspkit`:
 
-- **Programmatic:** import `wispy`, build a `HandlerRegistry`, register your
+- **Programmatic:** import `wspkit`, build a `HandlerRegistry`, register your
   Python callables, and call `run_stdio`. This is the right choice when your
   tool is already in Python and a small dependency is acceptable. Continue
-  with [Embed wispy in a workflow tool](guides/embed-library.md).
+  with [Embed wspkit in a workflow tool](guides/embed-library.md).
 - **Config_File:** ship a TOML or JSON file that maps WSP method names to
   Python dotted paths or external commands; consumers run
-  `python -m wispy --config <path>`. This is the right choice when you want
-  zero runtime coupling to `wispy`, or when your handlers live in a different
+  `python -m wspkit --config <path>`. This is the right choice when you want
+  zero runtime coupling to `wspkit`, or when your handlers live in a different
   language. Continue with [Ship a Config_File](guides/config-file.md).
 
 ## Next steps
