@@ -50,8 +50,8 @@ def _preflight() -> None:
     branch = _git("rev-parse", "--abbrev-ref", "HEAD", capture=True)
     if branch != "main":
         _fail(f"releases are cut from 'main', not {branch!r}")
-    if _git("status", "--porcelain", capture=True):
-        _fail("working tree is not clean; commit or stash first")
+    if _git("status", "--porcelain", "--untracked-files=no", capture=True):
+        _fail("tracked files have uncommitted changes; commit or stash first")
 
 
 def main() -> None:
@@ -73,7 +73,7 @@ def main() -> None:
     changelog.extract(version)  # aborts if the section is missing or empty
 
     _git("add", "docs/history/wspkit.md")
-    if _git("status", "--porcelain", capture=True):
+    if _git("diff", "--cached", "--name-only", capture=True):
         _git("commit", "-m", f"Release {version}")
     _git("tag", "-a", tag, "-m", f"wspkit {version}")
 
